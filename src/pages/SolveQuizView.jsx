@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-
+import api from "../api";
 const SolveQuizView = () => {
   const { quizId, courseId } = useParams();
   const { getToken, user } = useAuth();
@@ -56,9 +56,7 @@ const SolveQuizView = () => {
         console.log('Fetching quiz for quizId:', quizId, 'courseId:', courseId, 'userId:', user._id);
 
         // Fetch quiz data
-        const quizResponse = await axios.get(`http://localhost:5000/api/quizzes/single/${quizId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+const quizResponse = await api.get(`/quizzes/single/${quizId}`);
 
         const quizData = quizResponse.data;
         setQuiz({ id: quizData._id, title: quizData.title, duration: quizData.duration });
@@ -85,9 +83,7 @@ const SolveQuizView = () => {
 
         // Fetch submission status
         console.log('Fetching submission for quizId:', quizId);
-        const submissionResponse = await axios.get(`http://localhost:5000/api/submissions/${quizId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+   const submissionResponse = await api.get(`/submissions/${quizId}`);
 
         if (submissionResponse.data) {
           // Recompute questionResults for display
@@ -205,12 +201,11 @@ const SolveQuizView = () => {
       console.log('Submitting:', submissionData);
 
       const token = getToken();
-      const response = await axios.post(`http://localhost:5000/api/submissions/${quizId}`, submissionData, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+   const response = await api.post(`/submissions/${quizId}`, submissionData, {
+  headers: {
+    'Content-Type': 'application/json', // still required for JSON body
+  },
+});
 
       const savedSubmission = {
         ...submissionData,
@@ -239,9 +234,7 @@ const SolveQuizView = () => {
   const handleRetakeQuiz = async () => {
     try {
       const token = getToken();
-      await axios.delete(`http://localhost:5000/api/submissions/${quizId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    await api.delete(`/submissions/${quizId}`);
       setSubmission(null);
       setIsTimedOut(false);
       setAnswers(Object.fromEntries(Object.keys(answers).map((key) => [key, null])));

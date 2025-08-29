@@ -3,7 +3,7 @@ import { AcademicCapIcon } from '@heroicons/react/24/solid';
 import { useState, useEffect } from 'react';
 import '../index.css';
 import { useAuth } from '../context/AuthContext';
-
+import { getImageUrl } from "../utils/getImageUrl";
 function Navbar({ toggleSidebar, isSidebarOpen }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [currentDateTime, setCurrentDateTime] = useState('');
@@ -117,18 +117,14 @@ function Navbar({ toggleSidebar, isSidebarOpen }) {
                   aria-haspopup="true"
                   aria-expanded={showDropdown}
                 >
-                  <img
-                    src={
-                      user.profilePic
-                        ? `http://localhost:5000/${user.profilePic}`
-                        : '/default-profile-pic.jpg'
-                    }
-                    alt="Profile"
-                    className="h-8 w-8 rounded-full border-2 border-indigo-500/50"
-                    onError={(e) => {
-                      e.target.src = '/default-profile-pic.jpg';
-                    }}
-                  />
+       <img
+  src={getImageUrl(user?.profilePic)}
+  alt="Profile"
+  className="h-8 w-8 rounded-full border-2 border-indigo-500/50"
+  onError={(e) => {
+    e.target.src = "/default-profile-pic.jpg";
+  }}
+/>
                   <span className={`hidden md:inline ${isScrolled ? 'text-gray-200' : 'text-gray-900'}`}>
                     {user.name}
                   </span>

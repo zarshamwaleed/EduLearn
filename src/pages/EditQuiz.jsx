@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Trash2, CheckCircle, ArrowLeft, Clock, FileText } from 'lucide-react';
 import axios from 'axios';
+import api from "../api";
 
 const EditQuiz = () => {
   const { courseId, quizId } = useParams();
@@ -29,10 +30,7 @@ const EditQuiz = () => {
           throw new Error('Unauthorized: Only instructors can edit quizzes');
         }
 
-        const response = await axios.get(`http://localhost:5000/api/quizzes/single/${quizId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
+     const response = await api.get(`/quizzes/single/${quizId}`);
         const quiz = response.data;
         const [hours, minutes, seconds] = quiz.duration.split(':').map(Number);
         setTitle(quiz.title);
@@ -149,12 +147,11 @@ const EditQuiz = () => {
         throw new Error('No authentication token found');
       }
 
-      const res = await axios.put(`http://localhost:5000/api/quizzes/${quizId}`, quizData, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+const res = await api.put(`/quizzes/${quizId}`, quizData, {
+  headers: {
+    'Content-Type': 'application/json', // still needed for JSON body
+  },
+});
 
       setMessage({ text: 'Quiz updated successfully!', type: 'success' });
       setTimeout(() => navigate(`/course/${courseId}/quiz`), 1000);

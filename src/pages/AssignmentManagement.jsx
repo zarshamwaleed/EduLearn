@@ -19,7 +19,7 @@ import {
   Save
 } from 'lucide-react';
 import jsPDF from 'jspdf';
-
+import api from "../api";
 const AssignmentManagement = () => {
   const { courseId } = useParams();
   const { user, getToken } = useAuth();
@@ -56,31 +56,25 @@ const AssignmentManagement = () => {
   // Fetch assignments for the course
   useEffect(() => {
     const fetchAssignments = async () => {
-      setIsLoading(true);
-      try {
-        const token = getToken();
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-        if (!user || user.role !== 'instructor') {
-          throw new Error('Unauthorized: Instructor access only');
-        }
+  setIsLoading(true);
+  try {
+    if (!user || user.role !== "instructor") {
+      throw new Error("Unauthorized: Instructor access only");
+    }
 
-        const response = await axios.get(`http://localhost:5000/api/courses/${courseId}/assignments`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setAssignments(response.data);
-      } catch (err) {
-        console.error('Error fetching assignments:', err);
-        setError(err.response?.data?.message || 'Failed to fetch assignments');
-        if (err.response?.status === 401 || err.response?.status === 403) {
-          navigate('/login');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    const response = await api.get(`/courses/${courseId}/assignments`);
+    setAssignments(response.data);
+  } catch (err) {
+    console.error("Error fetching assignments:", err);
+    setError(err.response?.data?.message || "Failed to fetch assignments");
 
+    if (err.response?.status === 401 || err.response?.status === 403) {
+      navigate("/login");
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
     if (user) {
       fetchAssignments();
     } else {
@@ -90,45 +84,40 @@ const AssignmentManagement = () => {
   }, [courseId, user, getToken, navigate]);
 
   // Fetch submissions and assignment details
-  const handleViewSubmissions = async (assignmentId) => {
-    setIsLoading(true);
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
+    const handleViewSubmissions = async (assignmentId) => {
+  setIsLoading(true);
+  try {
+    // Fetch assignment details
+    const assignmentResponse = await api.get(`/assignments/${assignmentId}`);
+    setCurrentAssignmentDetails(assignmentResponse.data);
+
+    // Fetch submissions
+    const submissionsResponse = await api.get(
+      `/assignments/${assignmentId}/submissions`
+    );
+    setSubmissions(submissionsResponse.data);
+    setSelectedAssignment(assignmentId);
+
+    // Initialize marks with existing grades
+    const initialMarks = {};
+    submissionsResponse.data.forEach((sub) => {
+      if (sub.marks !== null) {
+        initialMarks[sub.studentId] = sub.marks;
       }
+    });
+    setMarks(initialMarks);
+  } catch (err) {
+    console.error("Error fetching submissions:", err);
+    setError(err.response?.data?.message || "Failed to fetch submissions");
 
-      // Fetch assignment details
-      const assignmentResponse = await axios.get(`http://localhost:5000/api/assignments/${assignmentId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setCurrentAssignmentDetails(assignmentResponse.data);
-
-      // Fetch submissions
-      const submissionsResponse = await axios.get(`http://localhost:5000/api/assignments/${assignmentId}/submissions`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSubmissions(submissionsResponse.data);
-      setSelectedAssignment(assignmentId);
-
-      // Initialize marks with existing grades
-      const initialMarks = {};
-      submissionsResponse.data.forEach((sub) => {
-        if (sub.marks !== null) {
-          initialMarks[sub.studentId] = sub.marks;
-        }
-      });
-      setMarks(initialMarks);
-    } catch (err) {
-      console.error('Error fetching submissions:', err);
-      setError(err.response?.data?.message || 'Failed to fetch submissions');
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        navigate('/login');
-      }
-    } finally {
-      setIsLoading(false);
+    if (err.response?.status === 401 || err.response?.status === 403) {
+      navigate("/login");
     }
-  };
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   // Handle input changes for marks
   const handleMarksChange = (studentId, value) => {
@@ -136,71 +125,69 @@ const AssignmentManagement = () => {
   };
 
   // Grade a submission
-  const handleGrade = async (submissionId, studentId) => {
-    const markValue = marks[studentId];
-    if (markValue === undefined || markValue === '') {
-      setError('Please enter a valid mark before submitting.');
-      return;
-    }
-    if (markValue > currentAssignmentDetails.totalMarks) {
-      setError(`Marks cannot exceed ${currentAssignmentDetails.totalMarks}`);
-      return;
-    }
+ const handleGrade = async (submissionId, studentId) => {
+  const markValue = marks[studentId];
 
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
+  if (markValue === undefined || markValue === "") {
+    setError("Please enter a valid mark before submitting.");
+    return;
+  }
+  if (markValue > currentAssignmentDetails.totalMarks) {
+    setError(`Marks cannot exceed ${currentAssignmentDetails.totalMarks}`);
+    return;
+  }
 
-      await axios.put(
-        `http://localhost:5000/api/assignment-submissions/${submissionId}/grade`,
-        { marks: markValue },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setSuccessMessage('Submission graded successfully!');
-      handleViewSubmissions(selectedAssignment); // Refresh submissions
-      setError('');
-    } catch (err) {
-      console.error('Error grading submission:', err);
-      setError(err.response?.data?.message || 'Failed to grade submission');
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        navigate('/login');
-      }
+  try {
+    await api.put(`/assignment-submissions/${submissionId}/grade`, {
+      marks: markValue,
+    });
+
+    setSuccessMessage("Submission graded successfully!");
+    handleViewSubmissions(selectedAssignment); // Refresh submissions
+    setError("");
+  } catch (err) {
+    console.error("Error grading submission:", err);
+    setError(err.response?.data?.message || "Failed to grade submission");
+    if (err.response?.status === 401 || err.response?.status === 403) {
+      navigate("/login");
     }
-  };
-
+  }
+};
   // Download a submission file
-  const handleDownload = async (submissionId, studentName) => {
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
+ const handleDownload = async (submissionId, studentName) => {
+  try {
+    const response = await api.get(
+      `/assignment-submissions/${submissionId}/download`,
+      {
+        responseType: "blob", // blob download ke liye zaroori
       }
+    );
 
-      const response = await axios.get(`http://localhost:5000/api/assignment-submissions/${submissionId}/download`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob',
-      });
+    // File ka naam content-disposition header se extract karna
+    const fileName =
+      response.headers["content-disposition"]?.match(/filename="(.+)"/)?.[1] ||
+      `${studentName}_submission.pdf`;
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${studentName}_submission${response.headers['content-disposition']?.match(/filename="(.+)"/)?.[1] || '.pdf'}`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      setSuccessMessage('Submission downloaded successfully!');
-      setError('');
-    } catch (err) {
-      console.error('Error downloading submission:', err);
-      setError(err.response?.data?.message || 'Failed to download submission');
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        navigate('/login');
-      }
+    // File download karwana
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    setSuccessMessage("Submission downloaded successfully!");
+    setError("");
+  } catch (err) {
+    console.error("Error downloading submission:", err);
+    setError(err.response?.data?.message || "Failed to download submission");
+    if (err.response?.status === 401 || err.response?.status === 403) {
+      navigate("/login");
     }
-  };
+  }
+};
 
   // Download assignment details as PDF
   const handleDownloadAssignmentDetails = async (assignment) => {
@@ -210,10 +197,7 @@ const AssignmentManagement = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await axios.get(`http://localhost:5000/api/assignments/${assignment._id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
+const response = await api.get(`/assignments/${assignment._id}`);
       const fullAssignmentData = response.data;
       const doc = new jsPDF();
 
@@ -337,16 +321,13 @@ const AssignmentManagement = () => {
         formDataToSend.append('file', selectedFile);
       }
 
-      const response = await axios.post(
-        `http://localhost:5000/api/courses/${courseId}/assignments`,
-        formDataToSend,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+    const response = await api.post(
+  `/courses/${courseId}/assignments`,
+  formDataToSend,
+  {
+    headers: { "Content-Type": "multipart/form-data" },
+  }
+);
 
       setAssignments([...assignments, response.data.assignment]);
       setSuccessMessage('Assignment created successfully!');
@@ -421,16 +402,15 @@ const AssignmentManagement = () => {
         formDataToSend.append('file', editSelectedFile);
       }
 
-      const response = await axios.put(
-        `http://localhost:5000/api/assignments/${selectedAssignment}`,
-        formDataToSend,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+     const response = await api.put(
+  `/assignments/${selectedAssignment}`,
+  formDataToSend,
+  {
+    headers: {
+      'Content-Type': 'multipart/form-data', // Authorization header is already handled by interceptor
+    },
+  }
+);
 
       setAssignments(assignments.map(ass =>
         ass._id === selectedAssignment ? response.data.assignment : ass
@@ -458,30 +438,25 @@ const AssignmentManagement = () => {
   };
 
   // Confirm delete
-  const handleConfirmDelete = async () => {
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
+const handleConfirmDelete = async () => {
+  try {
+    await api.delete(`/assignments/${assignmentToDelete}`);
 
-      await axios.delete(`http://localhost:5000/api/assignments/${assignmentToDelete}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    // Update state after successful delete
+    setAssignments(assignments.filter(ass => ass._id !== assignmentToDelete));
+    setSuccessMessage('Assignment deleted successfully!');
+    setShowDeleteModal(false);
+    setAssignmentToDelete(null);
+    setError('');
+  } catch (err) {
+    console.error('Error deleting assignment:', err);
+    setError(err.response?.data?.message || 'Failed to delete assignment');
 
-      setAssignments(assignments.filter(ass => ass._id !== assignmentToDelete));
-      setSuccessMessage('Assignment deleted successfully!');
-      setShowDeleteModal(false);
-      setAssignmentToDelete(null);
-      setError('');
-    } catch (err) {
-      console.error('Error deleting assignment:', err);
-      setError(err.response?.data?.message || 'Failed to delete assignment');
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        navigate('/login');
-      }
+    if (err.response?.status === 401 || err.response?.status === 403) {
+      navigate('/login'); // interceptor already removes token too
     }
-  };
+  }
+};
 
   // Utility function for date formatting
   const formatDate = (dateString) => {

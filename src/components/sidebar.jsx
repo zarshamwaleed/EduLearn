@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-
+import { getImageUrl } from "../utils/getImageUrl";
 import {
   HomeIcon,
   AcademicCapIcon,
@@ -150,20 +150,16 @@ function Sidebar({ isOpen: propIsOpen, onToggle }) {
         >
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <img
-                src={
-                  user.profilePic
-                    ? `http://localhost:5000/${user.profilePic}`
-                    : '/default-profile-pic.jpg'
-                }
-                alt="Profile"
-                className={`h-10 w-10 rounded-full border-2 ${
-                  isScrolled ? 'border-indigo-400' : 'border-indigo-500'
-                }`}
-                onError={(e) => {
-                  e.target.src = '/default-profile-pic.jpg';
-                }}
-              />
+         <img
+  src={getImageUrl(user.profilePic)}
+  alt="Profile"
+  className={`h-10 w-10 rounded-full border-2 ${
+    isScrolled ? "border-indigo-400" : "border-indigo-500"
+  }`}
+  onError={(e) => {
+    e.currentTarget.src = "/default-profile-pic.jpg";
+  }}
+/>
               <div
                 className={`absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 ${
                   isScrolled ? 'border-gray-800' : 'border-white'

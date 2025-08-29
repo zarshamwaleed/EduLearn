@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from "../api";
 import {
   ArrowLeftIcon,
   PencilIcon,
@@ -215,57 +216,45 @@ function CourseProgressSection({ progressData, setProgressData, userId, courseId
   const [showRatingModal, setShowRatingModal] = useState(false);
   const { getToken } = useAuth();
 
-  const submitFeedback = async () => {
-    try {
-      const token = getToken();
-      const { data } = await axios.post(
-        "http://localhost:5000/api/course-progress",
-        {
-          userId,
-          courseId,
-          progress: progressData.progress,
-          userRating: progressData.userRating,
-          feedback,
-          completedContents: progressData.completedContents,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setProgressData(data);
-      setFeedback(data.feedback || "");
-      setShowFeedbackSection(false);
-      setSuccessMessage('Feedback submitted successfully!');
-      setShowSuccessModal(true);
-    } catch (err) {
-      console.error('Error submitting feedback:', err);
-    }
-  };
+ const submitFeedback = async () => {
+  try {
+    const { data } = await api.post("/course-progress", {
+      userId,
+      courseId,
+      progress: progressData.progress,
+      userRating: progressData.userRating,
+      feedback,
+      completedContents: progressData.completedContents,
+    });
 
-  const submitRating = async (rating) => {
-    try {
-      const token = getToken();
-      const { data } = await axios.post(
-        "http://localhost:5000/api/course-progress",
-        {
-          userId,
-          courseId,
-          progress: progressData.progress,
-          userRating: rating,
-          feedback: progressData.feedback,
-          completedContents: progressData.completedContents,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setProgressData(data);
-      setSuccessMessage('Rating submitted successfully!');
-      setShowSuccessModal(true);
-    } catch (err) {
-      console.error('Error submitting rating:', err);
-    }
-  };
+    setProgressData(data);
+    setFeedback(data.feedback || "");
+    setShowFeedbackSection(false);
+    setSuccessMessage('Feedback submitted successfully!');
+    setShowSuccessModal(true);
+  } catch (err) {
+    console.error('Error submitting feedback:', err);
+  }
+};
+
+const submitRating = async (rating) => {
+  try {
+    const { data } = await api.post("/course-progress", {
+      userId,
+      courseId,
+      progress: progressData.progress,
+      userRating: rating,
+      feedback: progressData.feedback,
+      completedContents: progressData.completedContents,
+    });
+
+    setProgressData(data);
+    setSuccessMessage('Rating submitted successfully!');
+    setShowSuccessModal(true);
+  } catch (err) {
+    console.error('Error submitting rating:', err);
+  }
+};
 
   const { progress, userRating } = progressData;
 
@@ -390,48 +379,35 @@ function CourseDetail() {
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    const fetchCourseAndContent = async () => {
-      setIsLoading(true);
-      try {
-        const token = getToken();
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
+   const fetchCourseAndContent = async () => {
+  setIsLoading(true);
+  try {
+    // Fetch course details
+    const courseResponse = await api.get(`/create-course/${id}`);
+    setCourse(courseResponse.data);
 
-        // Fetch course details
-        const courseResponse = await axios.get(`http://localhost:5000/api/create-course/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setCourse(courseResponse.data);
+    // Fetch course content
+    const contentResponse = await api.get(`/upload/${id}`);
+    setContent(contentResponse.data);
 
-        // Fetch course content
-        const contentResponse = await axios.get(`http://localhost:5000/api/upload/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setContent(contentResponse.data);
+    if (role === 'student') {
+      // Fetch progress for students
+      const progressResponse = await api.get(`/course-progress/${user._id}/${id}`);
+      setProgressData(progressResponse.data);
+    }
 
-        if (role === 'student') {
-          // Fetch progress for students
-          const progressResponse = await axios.get(`http://localhost:5000/api/course-progress/${user._id}/${id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setProgressData(progressResponse.data);
-        }
-
-        // Fetch course feedback for instructors
-        if (role === 'instructor') {
-          const feedbackResponse = await axios.get(`http://localhost:5000/api/course-progress/course/${id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setFeedbacks(feedbackResponse.data);
-        }
-      } catch (err) {
-        console.error('Error fetching course or content:', err);
-        setError(err.response?.data?.error || err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (role === 'instructor') {
+      // Fetch course feedback for instructors
+      const feedbackResponse = await api.get(`/course-progress/course/${id}`);
+      setFeedbacks(feedbackResponse.data);
+    }
+  } catch (err) {
+    console.error('Error fetching course or content:', err);
+    setError(err.response?.data?.error || err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
     if (user) {
       fetchCourseAndContent();
@@ -441,27 +417,20 @@ function CourseDetail() {
     }
   }, [id, user, getToken, navigate, role]);
 
-  const handleDeleteContent = async () => {
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
+const handleDeleteContent = async () => {
+  try {
+    await api.delete(`/upload/${id}/${selectedContentId}`);
 
-      await axios.delete(`http://localhost:5000/api/upload/${id}/${selectedContentId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setContent(content.filter(item => item.content_id !== selectedContentId));
-      setSuccessMessage('Content deleted successfully!');
-      setShowSuccessModal(true);
-      setShowDeleteModal(false);
-      setSelectedContentId(null);
-    } catch (err) {
-      console.error('Error deleting content:', err);
-      setError(err.response?.data?.error || 'Failed to delete content');
-    }
-  };
+    setContent(content.filter(item => item.content_id !== selectedContentId));
+    setSuccessMessage('Content deleted successfully!');
+    setShowSuccessModal(true);
+    setShowDeleteModal(false);
+    setSelectedContentId(null);
+  } catch (err) {
+    console.error('Error deleting content:', err);
+    setError(err.response?.data?.error || 'Failed to delete content');
+  }
+};
 
   const handleToggleComplete = async (contentId) => {
     const completedContents = progressData.completedContents || [];
@@ -474,26 +443,22 @@ function CourseDetail() {
     const totalContent = content.length;
     const newProgress = totalContent > 0 ? (newCompleted.length / totalContent) * 100 : 0;
 
-    try {
-      const token = getToken();
-      const { data } = await axios.post(
-        "http://localhost:5000/api/course-progress",
-        {
-          userId: user._id,
-          courseId: id,
-          progress: newProgress,
-          userRating: progressData.userRating,
-          feedback: progressData.feedback,
-          completedContents: newCompleted,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setProgressData(data);
-      setSuccessMessage('Progress updated successfully!');
-      setShowSuccessModal(true);
-    } catch (err) {
-      console.error('Error updating progress:', err);
-    }
+try {
+  const { data } = await api.post("/course-progress", {
+    userId: user._id,
+    courseId: id,
+    progress: newProgress,
+    userRating: progressData.userRating,
+    feedback: progressData.feedback,
+    completedContents: newCompleted,
+  });
+
+  setProgressData(data);
+  setSuccessMessage('Progress updated successfully!');
+  setShowSuccessModal(true);
+} catch (err) {
+  console.error('Error updating progress:', err);
+}
   };
 
   const getContentTypeIcon = (type) => {

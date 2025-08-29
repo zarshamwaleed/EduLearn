@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { TrashIcon, PencilIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
-
+import api from "../api"; 
 const QuizManagement = () => {
   const { courseId } = useParams();
   const { getToken, user } = useAuth();
@@ -29,9 +29,7 @@ const QuizManagement = () => {
           throw new Error('Unauthorized: Only instructors can manage quizzes');
         }
 
-        const response = await axios.get(`http://localhost:5000/api/quizzes/${courseId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await api.get(`/quizzes/${courseId}`);
         setQuizzes(response.data);
       } catch (err) {
         console.error('Error fetching quizzes:', err);
@@ -61,10 +59,7 @@ const QuizManagement = () => {
         throw new Error('No authentication token found');
       }
 
-      await axios.delete(`http://localhost:5000/api/quizzes/${quizId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
+   await api.delete(`/quizzes/${quizId}`);
       setQuizzes(quizzes.filter(quiz => quiz._id !== quizId));
       setMessage({ text: 'Quiz deleted successfully.', type: 'success' });
     } catch (err) {

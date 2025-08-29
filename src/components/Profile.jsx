@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from "axios";
 import { PencilIcon, XMarkIcon } from "@heroicons/react/24/outline";
-
+import api from "../api";
 function Profile() {
   const { user, setUser, getToken, isAuthenticated } = useAuth();
   const [editProfile, setEditProfile] = useState(false);
@@ -30,16 +30,15 @@ function Profile() {
         const formData = new FormData();
         formData.append("profilePic", file);
         const token = getToken();
-        const response = await axios.put(
-          "http://localhost:5000/api/auth/profile/picture",
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
+      const response = await api.put(
+  "/auth/profile/picture",
+  formData,
+  {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  }
+);
         setUser(response.data);
       } catch (err) {
         console.error("Error updating profile picture:", err.response?.data || err.message);
@@ -48,23 +47,19 @@ function Profile() {
     }
   };
 
-  const saveProfile = async () => {
-    try {
-      const token = getToken();
-      const response = await axios.put(
-        "http://localhost:5000/api/auth/profile",
-        editUser,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setUser(response.data);
-      setEditProfile(false);
-    } catch (err) {
-      console.error("Error saving profile:", err.response?.data || err.message);
-      setError(`Failed to save profile: ${err.response?.data?.message || err.message}`);
-    }
-  };
+const saveProfile = async () => {
+  try {
+    const response = await api.put("/auth/profile", editUser);
+
+    setUser(response.data);
+    setEditProfile(false);
+  } catch (err) {
+    console.error("Error saving profile:", err.response?.data || err.message);
+    setError(
+      `Failed to save profile: ${err.response?.data?.message || err.message}`
+    );
+  }
+};
 
   if (!user) {
     return (
@@ -112,14 +107,19 @@ function Profile() {
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 sm:p-8 text-white">
             <div className="flex flex-col sm:flex-row items-center">
               <div className="relative mb-4 sm:mb-0 sm:mr-6">
-                <img
-                  src={user.profilePic ? `http://localhost:5000/${user.profilePic}` : '/default-profile-pic.jpg'}
-                  alt="Profile"
-                  className="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-white/30 shadow-lg object-cover"
-                  onError={(e) => {
-                    e.target.src = '/default-profile-pic.jpg';
-                  }}
-                />
+            <img
+  src={
+    user.profilePic
+      ? `${import.meta.env.VITE_API_URL.replace("/api", "")}/${user.profilePic}`
+      : "/default-profile-pic.jpg"
+  }
+  alt="Profile"
+  className="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-white/30 shadow-lg object-cover"
+  onError={(e) => {
+    e.target.src = "/default-profile-pic.jpg";
+  }}
+/>
+
                 <label className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 cursor-pointer transition-colors">
                   <PencilIcon className="h-5 w-5 text-indigo-600" />
                   <input
@@ -216,15 +216,20 @@ function Profile() {
               <div className="space-y-4">
                 <div className="flex flex-col items-center">
                   <div className="relative mb-4">
-                    <img
-                      className="h-24 w-24 rounded-full border-4 border-white shadow-md object-cover"
-                      src={
-                        editUser?.profilePic
-                          ? `http://localhost:5000/${editUser.profilePic}`
-                          : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                      }
-                      alt="Profile preview"
-                    />
+                   <img
+  className="h-24 w-24 rounded-full border-4 border-white shadow-md object-cover"
+  src={
+    editUser?.profilePic
+      ? `${import.meta.env.VITE_API_URL.replace("/api", "")}/${editUser.profilePic}`
+      : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+  }
+  alt="Profile preview"
+  onError={(e) => {
+    e.currentTarget.src =
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80";
+  }}
+/>
+
                     <label className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 cursor-pointer transition-colors">
                       <PencilIcon className="h-4 w-4 text-indigo-600" />
                       <input

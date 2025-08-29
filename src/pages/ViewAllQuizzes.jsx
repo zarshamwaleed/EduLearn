@@ -9,7 +9,7 @@ import {
   CheckCircleIcon,
   PlayIcon
 } from '@heroicons/react/24/outline';
-
+import api from "../api"; 
 const ViewAllQuizzes = () => {
   const { courseId } = useParams();
   const { getToken, user } = useAuth();
@@ -34,41 +34,32 @@ const ViewAllQuizzes = () => {
         }
 
         // Fetch course details to get the course name
-        try {
-          const courseResponse = await axios.get(`http://localhost:5000/api/courses/${courseId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setCourseName(courseResponse.data.title || `Course ${courseId}`);
-        } catch (err) {
-          console.error('Error fetching course details:', err);
-          setCourseName(`Course ${courseId}`);
-        }
+  try {
+  const courseResponse = await api.get(`/courses/${courseId}`);
+  setCourseName(courseResponse.data.title || `Course ${courseId}`);
+} catch (err) {
+  console.error('Error fetching course details:', err);
+  setCourseName(`Course ${courseId}`);
+}
 
         // Fetch quizzes
-        const quizResponse = await axios.get(`http://localhost:5000/api/quizzes/${courseId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const quizResponse = await api.get(`/quizzes/${courseId}`);
 
         const quizData = quizResponse.data;
         setQuizzes(quizData);
 
         // Fetch submission status for each quiz
-        const submissionPromises = quizData.map(async (quiz) => {
-          try {
-            const submissionResponse = await axios.get(
-              `http://localhost:5000/api/submissions/${quiz._id}`,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            );
-            return { quizId: quiz._id, hasSubmission: !!submissionResponse.data };
-          } catch (err) {
-            if (err.response?.status === 404) {
-              return { quizId: quiz._id, hasSubmission: false };
-            }
-            throw err;
-          }
-        });
+     const submissionPromises = quizData.map(async (quiz) => {
+  try {
+    const submissionResponse = await api.get(`/submissions/${quiz._id}`);
+    return { quizId: quiz._id, hasSubmission: !!submissionResponse.data };
+  } catch (err) {
+    if (err.response?.status === 404) {
+      return { quizId: quiz._id, hasSubmission: false };
+    }
+    throw err;
+  }
+});
 
         const submissionResults = await Promise.all(submissionPromises);
         const submissionMap = submissionResults.reduce((acc, { quizId, hasSubmission }) => {

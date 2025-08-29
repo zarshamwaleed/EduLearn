@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import jsPDF from 'jspdf';
-
+import api from "../api";
 const StudentAssignmentView = () => {
   const { courseId } = useParams();
   const { user, getToken } = useAuth();
@@ -29,9 +29,7 @@ const StudentAssignmentView = () => {
           throw new Error('Unauthorized: Student access only');
         }
 
-        const response = await axios.get(`http://localhost:5000/api/courses/${courseId}/assignments/student`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+      const response = await api.get(`/courses/${courseId}/assignments/student`);
         setAssignments(response.data);
       } catch (err) {
         console.error('Error fetching assignments:', err);
@@ -80,16 +78,15 @@ const StudentAssignmentView = () => {
       formData.append('courseId', courseId);
       formData.append('file', selectedFile);
 
-      const response = await axios.post(
-        `http://localhost:5000/api/assignments/${assignmentId}/submissions`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+      const response = await api.post(
+  `/assignments/${assignmentId}/submissions`,
+  formData,
+  {
+    headers: {
+      'Content-Type': 'multipart/form-data', // Authorization is handled automatically
+    },
+  }
+);
 
       console.log('Submission response:', response.data);
       setSuccessMessage('Assignment submitted successfully!');
@@ -130,10 +127,9 @@ const StudentAssignmentView = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await axios.get(`http://localhost:5000/api/assignment-submissions/${submissionId}/download`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob',
-      });
+    const response = await api.get(`/assignment-submissions/${submissionId}/download`, {
+  responseType: 'blob', // required for file downloads
+});
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
@@ -165,10 +161,9 @@ const StudentAssignmentView = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await axios.get(`http://localhost:5000/api/assignments/${assignmentId}/download`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob',
-      });
+ const response = await api.get(`/assignments/${assignmentId}/download`, {
+  responseType: 'blob', // required for downloading files
+});
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');

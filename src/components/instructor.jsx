@@ -1,7 +1,8 @@
 // frontend/src/pages/instructor.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../api"; // path sahi rakhna
+
 import { useAuth } from "../context/AuthContext";
 import {
   BookOpenIcon,
@@ -105,41 +106,31 @@ const InstructorDashboard = () => {
 
   // Fetch courses from backend
   const fetchCourses = async () => {
-    try {
-      const token = getToken();
-      if (!token) throw new Error("No authentication token found");
-      const response = await axios.get("http://localhost:5000/api/courses/", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setCourses(Array.isArray(response.data) ? response.data : []);
-    } catch (err) {
-      console.error("Error fetching courses:", err.response?.data || err.message);
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        setError("Unauthorized: Please log in again");
-        localStorage.removeItem("authToken");
-        navigate("/login");
-      } else {
-        setError(`Failed to load courses: ${err.response?.data?.message || err.message}`);
-      }
+  try {
+    const response = await api.get("/courses");
+    setCourses(Array.isArray(response.data) ? response.data : []);
+  } catch (err) {
+    console.error("Error fetching courses:", err.response?.data || err.message);
+    if (err.response?.status === 401 || err.response?.status === 403) {
+      setError("Unauthorized: Please log in again");
+      localStorage.removeItem("authToken");
+      navigate("/login");
+    } else {
+      setError(`Failed to load courses: ${err.response?.data?.message || err.message}`);
     }
-  };
+  }
+};
 
   // Fetch analytics from backend
-  const fetchAnalytics = async () => {
-    try {
-      const token = getToken();
-      console.log("Fetching analytics with token:", token); // Debug
-      if (!token) throw new Error("No authentication token found");
-      const response = await axios.get("http://localhost:5000/api/analytics/instructor", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log("Analytics response:", response.data); // Debug
-      setAnalytics(response.data);
-    } catch (err) {
-      console.error("Error fetching analytics:", err.response?.data || err.message);
-      setError(`Failed to load analytics: ${err.response?.data?.message || err.message}`);
-    }
-  };
+const fetchAnalytics = async () => {
+  try {
+    const response = await api.get("/analytics/instructor");
+    setAnalytics(response.data);
+  } catch (err) {
+    console.error("Error fetching analytics:", err.response?.data || err.message);
+    setError(`Failed to load analytics: ${err.response?.data?.message || err.message}`);
+  }
+};
 
   useEffect(() => {
     console.log("Analytics state:", analytics); // Debug
@@ -158,15 +149,10 @@ const InstructorDashboard = () => {
     setShowCreateForm(true);
   };
 
- const handleDeleteCourse = async (courseId) => {
-  if (!window.confirm("Are you sure you want to delete this course? This action cannot be undone.")) {
-    return;
-  }
+const handleDeleteCourse = async (courseId) => {
+  if (!window.confirm("Are you sure you want to delete this course?")) return;
   try {
-    const token = getToken();
-    await axios.delete(`http://localhost:5000/api/create-course/${courseId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await api.delete(`/create-course/${courseId}`);
     setCourses(courses.filter((course) => course._id !== courseId));
   } catch (err) {
     console.error("Error deleting course:", err.response?.data || err.message);
@@ -187,47 +173,33 @@ const InstructorDashboard = () => {
 
   
   const handleProfileImageChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      try {
-        const formData = new FormData();
-        formData.append("profilePic", file);
-        const token = getToken();
-        const response = await axios.put(
-          "http://localhost:5000/api/auth/profile/picture",
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-        setUser(response.data);
-      } catch (err) {
-        console.error("Error updating profile picture:", err.response?.data || err.message);
-        setError(`Failed to update profile picture: ${err.response?.data?.message || err.message}`);
-      }
-    }
-  };
-
-  const saveProfile = async () => {
+  const file = e.target.files[0];
+  if (file) {
     try {
-      const token = getToken();
-      const response = await axios.put(
-        "http://localhost:5000/api/auth/profile",
-        editUser,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const formData = new FormData();
+      formData.append("profilePic", file);
+
+      const response = await api.put("/auth/profile/picture", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       setUser(response.data);
-      setEditProfile(false);
     } catch (err) {
-      console.error("Error saving profile:", err.response?.data || err.message);
-      setError(`Failed to save profile: ${err.response?.data?.message || err.message}`);
+      console.error("Error updating profile picture:", err.response?.data || err.message);
+      setError(`Failed to update profile picture: ${err.response?.data?.message || err.message}`);
     }
-  };
+  }
+};
+
+const saveProfile = async () => {
+  try {
+    const response = await api.put("/auth/profile", editUser);
+    setUser(response.data);
+    setEditProfile(false);
+  } catch (err) {
+    console.error("Error saving profile:", err.response?.data || err.message);
+    setError(`Failed to save profile: ${err.response?.data?.message || err.message}`);
+  }
+};
 
   const renderStars = (rating) => {
     return Array(5)
@@ -326,11 +298,12 @@ const InstructorDashboard = () => {
                 <div className="relative">
                   <img
                     className="h-24 w-24 rounded-full border-4 border-white shadow-lg object-cover"
-                    src={
-                      user.profilePic
-                        ? `http://localhost:5000/${user.profilePic}`
-                        : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                    }
+                 src={
+  user?.profilePic
+    ? `${import.meta.env.VITE_API_URL.replace("/api", "")}/${user.profilePic}`
+    : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?..."
+}
+
                     alt="Instructor profile"
                   />
                   <button
@@ -820,11 +793,12 @@ const InstructorDashboard = () => {
                     <div className="relative mb-4">
                       <img
                         className="h-24 w-24 rounded-full border-4 border-white shadow-md object-cover"
-                        src={
-                          editUser?.profilePic
-                            ? `http://localhost:5000/${editUser.profilePic}`
-                            : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                        }
+                       src={
+  editUser?.profilePic
+    ? `${import.meta.env.VITE_API_URL.replace("/api", "")}/${editUser.profilePic}`
+    : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+}
+
                         alt="Profile preview"
                       />
                       <label className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 cursor-pointer transition-colors">

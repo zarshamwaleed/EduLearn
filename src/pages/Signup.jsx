@@ -90,12 +90,14 @@ export default function Signup() {
       if (registerForm.profilePic) {
         formData.append("profilePic", registerForm.profilePic);
       }
+try {
+      // ✅ use env variable
+      const API_URL = import.meta.env.VITE_API_URL;
 
-      try {
-        const response = await fetch('http://localhost:5000/api/auth/signup', {
-          method: 'POST',
-          body: formData,
-        });
+      const response = await fetch(`${API_URL}/api/auth/signup`, {
+        method: 'POST',
+        body: formData,
+      });
 
         const data = await response.json();
 

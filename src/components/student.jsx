@@ -4,8 +4,9 @@ import { PencilIcon, BookOpenIcon, ChartBarIcon, AcademicCapIcon, PlayIcon } fro
 import { ClockIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import { getImageUrl } from "../utils/getImageUrl";
 import { useAuth } from "../context/AuthContext";
-
+import api from "../api"; 
 export default function StudentDashboard() {
   const {
     user,
@@ -48,36 +49,27 @@ export default function StudentDashboard() {
   }, [authLoading, isAuthenticated, user, navigate]);
 
   const fetchEnrolledCourses = async () => {
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error("No authentication token found");
-      }
-      const response = await axios.get("http://localhost:5000/api/courses/enrolled", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log("Enrolled courses response:", response.data);
-      setEnrolledCourses(Array.isArray(response.data) ? response.data : []);
-    } catch (err) {
-      console.error("Error fetching enrolled courses:", err.response?.data || err.message);
-      if (err.response?.status === 404 || err.response?.status === 403) {
-        setEnrolledCourses([]);
-        console.log("No enrolled courses found or unauthorized, defaulting to empty list");
-      } else if (err.response?.status === 401) {
-        setError("Unauthorized: Please log in again");
-        localStorage.removeItem("authToken");
-        navigate("/login");
-      } else {
-        setError(
-          `Failed to load enrolled courses: ${
-            err.response?.data?.message || err.message
-          }`
-        );
-      }
-    } finally {
-      setIsLoading(false);
+  try {
+    const { data } = await api.get("/courses/enrolled");
+    console.log("Enrolled courses response:", data);
+    setEnrolledCourses(Array.isArray(data) ? data : []);
+  } catch (err) {
+    console.error("Error fetching enrolled courses:", err.response?.data || err.message);
+
+    if (err.response?.status === 404 || err.response?.status === 403) {
+      setEnrolledCourses([]);
+      console.log("No enrolled courses found or unauthorized, defaulting to empty list");
+    } else {
+      setError(
+        `Failed to load enrolled courses: ${
+          err.response?.data?.message || err.message
+        }`
+      );
     }
-  };
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleEditProfile = () => {
     setShowEditForm(true);
@@ -91,57 +83,46 @@ export default function StudentDashboard() {
     }));
   };
 
-  const handleProfileImageChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      try {
-        const formDataUpload = new FormData();
-        formDataUpload.append("profilePic", file);
-        const token = getToken();
-        const response = await axios.put(
-          "http://localhost:5000/api/auth/profile/picture",
-          formDataUpload,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-        console.log("Updated profile picture:", response.data);
-        setUser(response.data);
-      } catch (err) {
-        console.error("Error updating profile picture:", err.response?.data || err.message);
-        setError(
-          `Failed to update profile picture: ${
-            err.response?.data?.message || err.message
-          }`
-        );
-      }
-    }
-  };
+const handleProfileImageChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-  const handleSaveProfile = async () => {
-    try {
-      const token = getToken();
-      const response = await axios.put(
-        "http://localhost:5000/api/auth/profile",
-        formData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      console.log("Updated profile:", response.data);
-      setUser(response.data);
-      setShowEditForm(false);
-    } catch (err) {
-      console.error("Error saving profile:", err.response?.data || err.message);
-      setError(
-        `Failed to save profile: ${err.response?.data?.message || err.message}`
-      );
-    }
-  };
+  try {
+    const formDataUpload = new FormData();
+    formDataUpload.append("profilePic", file);
 
+    const response = await api.put("/auth/profile/picture", formDataUpload, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    console.log("Updated profile picture:", response.data);
+    setUser(response.data); // backend se updated user aa raha hoga
+  } catch (err) {
+    console.error("Error updating profile picture:", err.response?.data || err.message);
+    setError(
+      `Failed to update profile picture: ${
+        err.response?.data?.message || err.message
+      }`
+    );
+  }
+};
+
+ const handleSaveProfile = async () => {
+  try {
+    const response = await api.put("/auth/profile", formData);
+
+    console.log("Updated profile:", response.data);
+    setUser(response.data);
+    setShowEditForm(false);
+  } catch (err) {
+    console.error("Error saving profile:", err.response?.data || err.message);
+    setError(
+      `Failed to save profile: ${err.response?.data?.message || err.message}`
+    );
+  }
+};
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -206,15 +187,14 @@ export default function StudentDashboard() {
         <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 mb-8">
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8">
             <div className="relative">
-              <img
-                src={
-                  user.profilePic
-                    ? `http://localhost:5000/${user.profilePic}`
-                    : "https://via.placeholder.com/150"
-                }
-                alt={user.name}
-                className="w-32 h-32 rounded-2xl object-cover border-4 border-white shadow-lg"
-              />
+            <img
+  src={getImageUrl(user.profilePic)}
+  alt={user.name || "Profile"}
+  className="w-32 h-32 rounded-2xl object-cover border-4 border-white shadow-lg"
+  onError={(e) => {
+    e.currentTarget.src = "/default-profile-pic.jpg";
+  }}
+/>
               <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-white"></div>
             </div>
             <div className="flex-1">
@@ -432,15 +412,14 @@ export default function StudentDashboard() {
                 <div className="space-y-6">
                   <div className="flex flex-col items-center">
                     <div className="relative mb-6">
-                      <img
-                        className="h-32 w-32 rounded-2xl border-4 border-white shadow-xl object-cover"
-                        src={
-                          user.profilePic
-                            ? `http://localhost:5000/${user.profilePic}`
-                            : "https://via.placeholder.com/150"
-                        }
-                        alt="Profile preview"
-                      />
+                    <img
+  className="h-32 w-32 rounded-2xl border-4 border-white shadow-xl object-cover"
+  src={getImageUrl(user.profilePic)}
+  alt="Profile preview"
+  onError={(e) => {
+    e.currentTarget.src = "/default-profile-pic.jpg"; // fallback agar load fail ho jaye
+  }}
+/>
                       <label className="absolute -bottom-2 -right-2 bg-indigo-600 hover:bg-indigo-700 p-3 rounded-xl shadow-lg hover:shadow-xl cursor-pointer transition-all duration-200 group">
                         <PencilIcon className="h-4 w-4 text-white group-hover:rotate-12 transition-transform" />
                         <input

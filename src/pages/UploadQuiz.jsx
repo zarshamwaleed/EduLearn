@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Trash2, CheckCircle, Clock, HelpCircle, AlertCircle } from 'lucide-react';
 import axios from 'axios';
-
+import api from "../api"; 
 const UploadQuiz = () => {
   const { courseId } = useParams();
   const { getToken, user } = useAuth();
@@ -115,12 +115,11 @@ const UploadQuiz = () => {
         throw new Error('No authentication token found');
       }
 
-      const res = await axios.post(`http://localhost:5000/api/quizzes/${courseId}`, quizData, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  const res = await api.post(`/quizzes/${courseId}`, quizData, {
+  headers: {
+    'Content-Type': 'application/json', // still required for JSON body
+  },
+});
 
       console.log('✅ Quiz created:', res.data);
       setMessage({ text: 'Quiz created successfully!', type: 'success' });

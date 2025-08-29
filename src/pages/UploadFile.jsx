@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-
+import api from "../api";
 const UploadFile = () => {
   const { courseId } = useParams();
   const { getToken, user } = useAuth();
@@ -90,16 +90,11 @@ const UploadFile = () => {
       formData.append('file', file);
       formData.append('contentType', contentType);
 
-      const res = await axios.post(
-        `http://localhost:5000/api/upload/${courseId}`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+   const res = await api.post(`/upload/${courseId}`, formData, {
+  headers: {
+    'Content-Type': 'multipart/form-data', // Authorization handled automatically
+  },
+});
 
       setMessage(res.data.message);
       setError('');
