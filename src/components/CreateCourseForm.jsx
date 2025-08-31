@@ -223,11 +223,15 @@ const res = await fetch(`${API_URL}/api/create-course`, {
             
             {courseData.imagePreview ? (
               <div className="mt-1 flex flex-col items-start">
-                <img
-                  src={courseData.imagePreview}
-                  alt="Preview"
-                  className="h-40 w-full object-cover rounded-lg border border-gray-200 mb-4"
-                />
+            <img
+  src={courseData?.imagePreview || "https://via.placeholder.com/400x200"}
+  alt="Preview"
+  className="h-40 w-full object-cover rounded-lg border border-gray-200 mb-4"
+  onError={(e) => {
+    e.currentTarget.src = "https://via.placeholder.com/400x200";
+  }}
+/>
+
                 <label className="cursor-pointer bg-white text-indigo-600 hover:text-indigo-500 font-medium py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 inline-flex items-center">
                   <CloudArrowUpIcon className="h-5 w-5 mr-2" />
                   Change Image

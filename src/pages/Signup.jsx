@@ -162,11 +162,15 @@ try {
                   onClick={triggerFileInput}
                 >
                   {imagePreview ? (
-                    <img 
-                      src={imagePreview} 
-                      alt="Profile preview" 
-                      className="h-full w-full rounded-full object-cover"
-                    />
+                 <img
+  src={imagePreview || "/default-profile-pic.jpg"}
+  alt="Profile preview"
+  className="h-full w-full rounded-full object-cover"
+  onError={(e) => {
+    e.currentTarget.src = "/default-profile-pic.jpg";
+  }}
+/>
+
                   ) : (
                     <CameraIcon className="h-8 w-8 text-gray-500" />
                   )}

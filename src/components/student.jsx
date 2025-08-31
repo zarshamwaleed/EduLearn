@@ -187,14 +187,12 @@ const handleProfileImageChange = async (e) => {
         <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 mb-8">
           <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8">
             <div className="relative">
-            <img
-  src={getImageUrl(user.profilePic)}
+<img
+  src={user.profilePic || "/default-profile-pic.jpg"}
   alt={user.name || "Profile"}
   className="w-32 h-32 rounded-2xl object-cover border-4 border-white shadow-lg"
-  onError={(e) => {
-    e.currentTarget.src = "/default-profile-pic.jpg";
-  }}
 />
+
               <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-white"></div>
             </div>
             <div className="flex-1">
@@ -412,14 +410,15 @@ const handleProfileImageChange = async (e) => {
                 <div className="space-y-6">
                   <div className="flex flex-col items-center">
                     <div className="relative mb-6">
-                    <img
+<img
   className="h-32 w-32 rounded-2xl border-4 border-white shadow-xl object-cover"
-  src={getImageUrl(user.profilePic)}
+  src={user.profilePic || "/default-profile-pic.jpg"}
   alt="Profile preview"
   onError={(e) => {
-    e.currentTarget.src = "/default-profile-pic.jpg"; // fallback agar load fail ho jaye
+    e.currentTarget.src = "/default-profile-pic.jpg"; // fallback agar Cloudinary image load fail ho jaye
   }}
 />
+
                       <label className="absolute -bottom-2 -right-2 bg-indigo-600 hover:bg-indigo-700 p-3 rounded-xl shadow-lg hover:shadow-xl cursor-pointer transition-all duration-200 group">
                         <PencilIcon className="h-4 w-4 text-white group-hover:rotate-12 transition-transform" />
                         <input

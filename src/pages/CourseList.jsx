@@ -252,14 +252,15 @@ function CourseList() {
                           className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all duration-300 hover:border-indigo-300"
                         >
                           <div className="h-48 bg-gray-100 relative overflow-hidden">
-                            <img
-                              src={course.image_url || "https://via.placeholder.com/400x225"}
-                              alt={course.title}
-                              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                              onError={(e) => {
-                                e.target.src = "https://via.placeholder.com/400x225";
-                              }}
-                            />
+                         <img
+  src={course.image_url || "https://via.placeholder.com/400x225"}
+  alt={course.title}
+  className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+  onError={(e) => {
+    e.currentTarget.src = "https://via.placeholder.com/400x225";
+  }}
+/>
+
                             <div className="absolute top-3 right-3">
                               <span
                                 className={`text-xs px-2 py-1 rounded-full ${
@@ -356,14 +357,15 @@ function CourseList() {
                           className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all duration-300 hover:border-indigo-300"
                         >
                           <div className="h-48 bg-gray-100 relative overflow-hidden">
-                            <img
-                              src={course.image_url || "https://via.placeholder.com/400x225"}
-                              alt={course.title}
-                              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                              onError={(e) => {
-                                e.target.src = "https://via.placeholder.com/400x225";
-                              }}
-                            />
+                        <img
+  src={course.image_url || "https://via.placeholder.com/400x225"}
+  alt={course.title}
+  className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+  onError={(e) => {
+    e.currentTarget.src = "https://via.placeholder.com/400x225";
+  }}
+/>
+
                             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
                               <h3 className="font-bold text-white text-lg">
                                 {course.title}
@@ -454,14 +456,15 @@ function CourseList() {
                     className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-indigo-300"
                   >
                     <div className="h-48 bg-gray-100 relative overflow-hidden">
-                      <img
-                        src={course.image_url || "https://via.placeholder.com/400x225"}
-                        alt={course.title}
-                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                        onError={(e) => {
-                          e.target.src = "https://via.placeholder.com/400x225";
-                        }}
-                      />
+                   <img
+  src={course.image_url || "https://via.placeholder.com/400x225"}
+  alt={course.title}
+  className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+  onError={(e) => {
+    e.currentTarget.src = "https://via.placeholder.com/400x225";
+  }}
+/>
+
                       <div className="absolute top-3 right-3">
                         <span
                           className={`text-xs px-2 py-1 rounded-full ${

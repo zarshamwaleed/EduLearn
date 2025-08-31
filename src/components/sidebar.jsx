@@ -150,8 +150,8 @@ function Sidebar({ isOpen: propIsOpen, onToggle }) {
         >
           <div className="flex items-center space-x-3">
             <div className="relative">
-         <img
-  src={getImageUrl(user.profilePic)}
+ <img
+  src={user?.profilePic || "/default-profile-pic.jpg"}
   alt="Profile"
   className={`h-10 w-10 rounded-full border-2 ${
     isScrolled ? "border-indigo-400" : "border-indigo-500"
@@ -160,6 +160,7 @@ function Sidebar({ isOpen: propIsOpen, onToggle }) {
     e.currentTarget.src = "/default-profile-pic.jpg";
   }}
 />
+
               <div
                 className={`absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 ${
                   isScrolled ? 'border-gray-800' : 'border-white'

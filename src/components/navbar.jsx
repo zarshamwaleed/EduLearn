@@ -117,14 +117,15 @@ function Navbar({ toggleSidebar, isSidebarOpen }) {
                   aria-haspopup="true"
                   aria-expanded={showDropdown}
                 >
-       <img
-  src={getImageUrl(user?.profilePic)}
+<img
+  src={user?.profilePic || "/default-profile-pic.jpg"}
   alt="Profile"
   className="h-8 w-8 rounded-full border-2 border-indigo-500/50"
   onError={(e) => {
-    e.target.src = "/default-profile-pic.jpg";
+    e.currentTarget.src = "/default-profile-pic.jpg";
   }}
 />
+
                   <span className={`hidden md:inline ${isScrolled ? 'text-gray-200' : 'text-gray-900'}`}>
                     {user.name}
                   </span>

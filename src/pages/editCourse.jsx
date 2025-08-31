@@ -216,11 +216,15 @@ const EditCourseForm = () => {
                   />
                   {formData.imagePreview && (
                     <div className="relative">
-                      <img
-                        src={formData.imagePreview}
-                        alt="Preview"
-                        className="h-20 w-20 rounded-lg object-cover border border-gray-300"
-                      />
+                    <img
+  src={formData.imagePreview || "https://via.placeholder.com/80"}
+  alt="Preview"
+  className="h-20 w-20 rounded-lg object-cover border border-gray-300"
+  onError={(e) => {
+    e.currentTarget.src = "https://via.placeholder.com/80";
+  }}
+/>
+
                       <button
                         type="button"
                         onClick={() => setFormData({ ...formData, imagePreview: "", imageFile: null })}

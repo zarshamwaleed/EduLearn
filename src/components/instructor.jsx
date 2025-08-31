@@ -296,16 +296,19 @@ const saveProfile = async () => {
             <div className="flex flex-col md:flex-row items-center">
               <div className="flex-shrink-0 mb-6 md:mb-0 md:mr-8 relative">
                 <div className="relative">
-                  <img
-                    className="h-24 w-24 rounded-full border-4 border-white shadow-lg object-cover"
-                 src={
-  user?.profilePic
-    ? `${import.meta.env.VITE_API_URL.replace("/api", "")}/${user.profilePic}`
-    : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?..."
-}
+             <img
+  className="h-24 w-24 rounded-full border-4 border-white shadow-lg object-cover"
+  src={
+    user?.profilePic ||
+    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?..."
+  }
+  alt="Instructor profile"
+  onError={(e) => {
+    e.currentTarget.src =
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?...";
+  }}
+/>
 
-                    alt="Instructor profile"
-                  />
                   <button
                     onClick={() => setEditProfile(true)}
                     className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 transition-colors"
@@ -465,14 +468,19 @@ const saveProfile = async () => {
                       className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
                     >
                       <div className="h-48 w-full overflow-hidden">
-                        <img
-                          src={
-                            course.image_url ||
-                            "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
-                          }
-                          alt={course.title}
-                          className="w-full h-full object-cover"
-                        />
+                     <img
+  src={
+    course?.image_url ||
+    "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
+  }
+  alt={course?.title || "Course image"}
+  className="w-full h-full object-cover"
+  onError={(e) => {
+    e.currentTarget.src =
+      "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80";
+  }}
+/>
+
                       </div>
                       <div className="p-4">
                         <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-1">
@@ -791,16 +799,20 @@ const saveProfile = async () => {
                 <div className="space-y-4">
                   <div className="flex flex-col items-center">
                     <div className="relative mb-4">
-                      <img
-                        className="h-24 w-24 rounded-full border-4 border-white shadow-md object-cover"
-                       src={
-  editUser?.profilePic
-    ? `${import.meta.env.VITE_API_URL.replace("/api", "")}/${editUser.profilePic}`
-    : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-}
+                 <img
+  className="h-24 w-24 rounded-full border-4 border-white shadow-md object-cover"
+  src={
+    editUser?.profilePic
+      ? `${import.meta.env.VITE_API_URL.replace("/api", "")}/${editUser.profilePic}`
+      : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+  }
+  alt="Profile preview"
+  onError={(e) => {
+    e.currentTarget.src =
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80";
+  }}
+/>
 
-                        alt="Profile preview"
-                      />
                       <label className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 cursor-pointer transition-colors">
                         <PencilIcon className="h-4 w-4 text-indigo-600" />
                         <input
