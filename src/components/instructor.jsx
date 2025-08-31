@@ -47,6 +47,9 @@ const InstructorDashboard = () => {
   const [analytics, setAnalytics] = useState(null);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+const [profilePreview, setProfilePreview] = useState(""); // for showing the image in modal
+const [profileFile, setProfileFile] = useState(null); // for uploading to backend
+
 
   const filteredCourses = courses.filter(
     (course) => String(course.instructorId) === String(user._id)
@@ -171,28 +174,40 @@ const handleDeleteCourse = async (courseId) => {
   };
 
 
-  
-  const handleProfileImageChange = async (e) => {
+
+
+// Sync with editUser when it changes
+useEffect(() => {
+  if (editUser?.profilePic && typeof editUser.profilePic === "string") {
+    setProfilePreview(`${import.meta.env.VITE_API_URL.replace("/api", "")}/${editUser.profilePic}`);
+  } else {
+    setProfilePreview(""); // default placeholder
+  }
+}, [editUser?.profilePic]);
+
+const handleProfileImageChange = (e) => {
   const file = e.target.files[0];
   if (file) {
-    try {
-      const formData = new FormData();
-      formData.append("profilePic", file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfilePreview(reader.result); // show selected image immediately
+    };
+    reader.readAsDataURL(file);
 
-      const response = await api.put("/auth/profile/picture", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      setUser(response.data);
-    } catch (err) {
-      console.error("Error updating profile picture:", err.response?.data || err.message);
-      setError(`Failed to update profile picture: ${err.response?.data?.message || err.message}`);
-    }
+    setProfileFile(file); // keep file for backend upload
   }
 };
-
 const saveProfile = async () => {
   try {
-    const response = await api.put("/auth/profile", editUser);
+    const formData = new FormData();
+    formData.append("name", editUser.name);
+    formData.append("email", editUser.email);
+    formData.append("bio", editUser.bio);
+    if (profileFile) formData.append("profilePic", profileFile);
+
+    const response = await api.put("/auth/profile", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     setUser(response.data);
     setEditProfile(false);
   } catch (err) {
@@ -200,6 +215,7 @@ const saveProfile = async () => {
     setError(`Failed to save profile: ${err.response?.data?.message || err.message}`);
   }
 };
+
 
   const renderStars = (rating) => {
     return Array(5)
@@ -799,33 +815,36 @@ const saveProfile = async () => {
           </button>
         </div>
 
-        {/* Profile Picture */}
-        <div className="flex flex-col items-center mb-4">
-          <div className="relative">
-            <img
-              className="h-24 w-24 rounded-full border-4 border-white shadow-md object-cover"
-              src={
-                editUser?.profilePic
-                  ? `${import.meta.env.VITE_API_URL.replace("/api", "")}/${editUser.profilePic}`
-                  : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-              }
-              alt="Profile preview"
-              onError={(e) => {
-                e.currentTarget.src =
-                  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80";
-              }}
-            />
-            <label className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 cursor-pointer">
-              <PencilIcon className="h-4 w-4 text-indigo-600" />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleProfileImageChange}
-                className="sr-only"
-              />
-            </label>
-          </div>
-        </div>
+       {/* Profile Picture */}
+<div className="flex flex-col items-center mb-4">
+  <div className="relative">
+    <img
+      className="h-24 w-24 rounded-full border-4 border-white shadow-md object-cover"
+      src={
+        profilePreview
+          ? profilePreview.startsWith("http")
+            ? profilePreview
+            : `${import.meta.env.VITE_API_URL.replace("/api", "")}/${profilePreview}`
+          : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+      }
+      alt="Profile preview"
+      onError={(e) => {
+        e.currentTarget.src =
+          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80";
+      }}
+    />
+    <label className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 cursor-pointer">
+      <PencilIcon className="h-4 w-4 text-indigo-600" />
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleProfileImageChange}
+        className="sr-only"
+      />
+    </label>
+  </div>
+</div>
+
 
         {/* Form Fields */}
         <div className="space-y-4">
