@@ -783,105 +783,107 @@ const saveProfile = async () => {
         )}
 
         {/* Edit Profile Modal */}
-        {editProfile && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-gray-800">Edit Profile</h2>
-                  <button
-                    onClick={() => setEditProfile(false)}
-                    className="text-gray-400 hover:text-gray-500 rounded-full p-1 hover:bg-gray-100"
-                  >
-                    <XMarkIcon className="h-6 w-6" />
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex flex-col items-center">
-                    <div className="relative mb-4">
-                 <img
-  className="h-24 w-24 rounded-full border-4 border-white shadow-md object-cover"
-  src={
-    editUser?.profilePic
-      ? `${import.meta.env.VITE_API_URL.replace("/api", "")}/${editUser.profilePic}`
-      : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-  }
-  alt="Profile preview"
-  onError={(e) => {
-    e.currentTarget.src =
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80";
-  }}
-/>
+     {/* Edit Profile Modal */}
+{editProfile && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-800">Edit Profile</h2>
+          <button
+            onClick={() => setEditProfile(false)}
+            className="text-gray-400 hover:text-gray-500 rounded-full p-1 hover:bg-gray-100"
+          >
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+        </div>
 
-                      <label className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 cursor-pointer transition-colors">
-                        <PencilIcon className="h-4 w-4 text-indigo-600" />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleProfileImageChange}
-                          className="sr-only"
-                        />
-                      </label>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={editUser?.name || ""}
-                      onChange={handleProfileChange}
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={editUser?.email || ""}
-                      onChange={handleProfileChange}
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Bio
-                    </label>
-                    <textarea
-                      name="bio"
-                      rows={4}
-                      value={editUser?.bio || ""}
-                      onChange={handleProfileChange}
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-                      placeholder="Tell students about your background and expertise..."
-                    />
-                  </div>
-                  <div className="pt-4 flex justify-end space-x-3">
-                    <button
-                      type="button"
-                      onClick={() => setEditProfile(false)}
-                      className="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={saveProfile}
-                      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                      Save Profile
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* Profile Picture */}
+        <div className="flex flex-col items-center mb-4">
+          <div className="relative">
+            <img
+              className="h-24 w-24 rounded-full border-4 border-white shadow-md object-cover"
+              src={
+                editUser?.profilePic
+                  ? `${import.meta.env.VITE_API_URL.replace("/api", "")}/${editUser.profilePic}`
+                  : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+              }
+              alt="Profile preview"
+              onError={(e) => {
+                e.currentTarget.src =
+                  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80";
+              }}
+            />
+            <label className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 cursor-pointer">
+              <PencilIcon className="h-4 w-4 text-indigo-600" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleProfileImageChange}
+                className="sr-only"
+              />
+            </label>
           </div>
-        )}
+        </div>
+
+        {/* Form Fields */}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <input
+              type="text"
+              name="name"
+              value={editUser?.name || ""}
+              onChange={handleProfileChange}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={editUser?.email || ""}
+              onChange={handleProfileChange}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+            <textarea
+              name="bio"
+              rows={4}
+              value={editUser?.bio || ""}
+              onChange={handleProfileChange}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+              placeholder="Tell students about your background and expertise..."
+            />
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className="pt-4 flex justify-end space-x-3">
+          <button
+            type="button"
+            onClick={() => setEditProfile(false)}
+            className="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={saveProfile}
+            className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            Save Profile
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
       </div>
     </div>
   );
