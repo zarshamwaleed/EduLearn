@@ -88,26 +88,21 @@ const handleProfileImageChange = async (e) => {
   if (!file) return;
 
   try {
-    const formDataUpload = new FormData();
-    formDataUpload.append("profilePic", file);
+    const formData = new FormData();
+    formData.append("profilePic", file);
 
-    const response = await api.put("/auth/profile/picture", formDataUpload, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
+    const token = getToken(); // ensure token included
+    const response = await api.put("/auth/profile/picture", formData, {
+      headers: { Authorization: `Bearer ${token}` },
     });
 
-    console.log("Updated profile picture:", response.data);
-    setUser(response.data); // backend se updated user aa raha hoga
+    setUser(response.data);
   } catch (err) {
     console.error("Error updating profile picture:", err.response?.data || err.message);
-    setError(
-      `Failed to update profile picture: ${
-        err.response?.data?.message || err.message
-      }`
-    );
+    setError(`Failed to update profile picture: ${err.response?.data?.message || err.message}`);
   }
 };
+
 
  const handleSaveProfile = async () => {
   try {
