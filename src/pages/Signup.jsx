@@ -94,10 +94,10 @@ try {
       // ✅ use env variable
       const API_URL = import.meta.env.VITE_API_URL;
 
-      const response = await fetch(`${API_URL}/api/auth/signup`, {
-        method: 'POST',
-        body: formData,
-      });
+ const response = await fetch(`${API_URL}/auth/signup`, { // removed extra /api
+  method: 'POST',
+  body: formData,
+});
 
         const data = await response.json();
 
