@@ -73,61 +73,63 @@ export default function Signup() {
     return Object.keys(errors).length === 0;
   };
 
-  const handleRegisterSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
+const handleRegisterSubmit = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
 
-    if (validateRegisterForm()) {
-      const formData = new FormData();
-      formData.append("name", registerForm.name);
-      formData.append("email", registerForm.email);
-      formData.append("phone", registerForm.phone);
-      formData.append("password", registerForm.password);
-      formData.append("confirmPassword", registerForm.confirmPassword);
-      formData.append("role", registerForm.role);
-      formData.append("bio", registerForm.bio);
+  if (validateRegisterForm()) {
+    const formData = new FormData();
+    formData.append("name", registerForm.name);
+    formData.append("email", registerForm.email);
+    formData.append("phone", registerForm.phone);
+    formData.append("password", registerForm.password);
+    formData.append("confirmPassword", registerForm.confirmPassword);
+    formData.append("role", registerForm.role);
+    formData.append("bio", registerForm.bio);
 
-      if (registerForm.profilePic) {
-        formData.append("profilePic", registerForm.profilePic);
-      }
-try {
-      // ✅ use env variable
+    if (registerForm.profilePic) {
+      formData.append("profilePic", registerForm.profilePic);
+    }
+
+    try {
       const API_URL = import.meta.env.VITE_API_URL;
 
- const response = await fetch(`${API_URL}/auth/signup`, { // removed extra /api
-  method: 'POST',
-  body: formData,
-});
+      const response = await fetch(`${API_URL}/auth/signup`, {
+        method: "POST",
+        body: formData, // <-- FormData directly, no JSON
+      });
 
-        const data = await response.json();
+      const result = await response.json();
 
-        if (response.ok) {
-          alert('Registration successful!');
-          setRegisterForm({
-            name: '',
-            email: '',
-            phone: '',
-            password: '',
-            confirmPassword: '',
-            profilePic: null,
-            bio: '',
-            role: ''
-          });
-          setImagePreview(null);
-          navigate('/login');
-        } else {
-          alert(data.message || 'Error registering user');
-        }
-      } catch (error) {
-        alert('There was an error connecting to the server');
-        console.error(error);
-      } finally {
-        setIsLoading(false);
+      if (response.ok) {
+        alert('Registration successful!');
+        setRegisterForm({
+          name: '',
+          email: '',
+          phone: '',
+          password: '',
+          confirmPassword: '',
+          profilePic: null,
+          bio: '',
+          role: ''
+        });
+        setImagePreview(null);
+        navigate('/login');
+      } else {
+        alert(result.message || 'Error registering user');
       }
-    } else {
+    } catch (error) {
+      alert('There was an error connecting to the server');
+      console.error(error);
+    } finally {
       setIsLoading(false);
     }
-  };
+  } else {
+    setIsLoading(false);
+  }
+};
+
+
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();

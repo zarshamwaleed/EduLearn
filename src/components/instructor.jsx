@@ -189,32 +189,51 @@ const handleProfileImageChange = (e) => {
   const file = e.target.files[0];
   if (file) {
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setProfilePreview(reader.result); // show selected image immediately
-    };
+    reader.onloadend = () => setProfilePreview(reader.result);
     reader.readAsDataURL(file);
 
-    setProfileFile(file); // keep file for backend upload
+    setEditUser(prev => ({ ...prev, profilePic: file }));
   }
 };
+
 const saveProfile = async () => {
   try {
     const formData = new FormData();
     formData.append("name", editUser.name);
     formData.append("email", editUser.email);
-    formData.append("bio", editUser.bio);
-    if (profileFile) formData.append("profilePic", profileFile);
+    formData.append("bio", editUser.bio || "");
 
-    const response = await api.put("/auth/profile", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+    if (editUser.profilePic instanceof File) {
+      formData.append("profilePic", editUser.profilePic);
+    }
+
+    // get token from localStorage or context
+    const token = localStorage.getItem("token"); 
+
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/profile`, {
+      method: "PUT",
+      body: formData,
+      headers: {
+        Authorization: `Bearer ${token}`, // ⚡ important
+        // DO NOT set Content-Type manually when using FormData
+      },
     });
-    setUser(response.data);
-    setEditProfile(false);
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert("Profile updated successfully");
+      setEditProfile(false);
+    } else {
+      alert(data.message || "Error updating profile");
+    }
   } catch (err) {
-    console.error("Error saving profile:", err.response?.data || err.message);
-    setError(`Failed to save profile: ${err.response?.data?.message || err.message}`);
+    console.error("Error saving profile:", err);
+    alert("Server error");
   }
 };
+
+
 
 
   const renderStars = (rating) => {
