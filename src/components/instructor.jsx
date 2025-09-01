@@ -179,20 +179,18 @@ const handleDeleteCourse = async (courseId) => {
 // Sync with editUser when it changes
 useEffect(() => {
   if (editUser?.profilePic && typeof editUser.profilePic === "string") {
-    setProfilePreview(`${import.meta.env.VITE_API_URL.replace("/api", "")}/${editUser.profilePic}`);
+    setProfilePreview(editUser.profilePic); // backend URL direct use karo (Cloudinary image hamesha full URL hoti hai)
   } else {
     setProfilePreview(""); // default placeholder
   }
 }, [editUser?.profilePic]);
 
+
 const handleProfileImageChange = (e) => {
   const file = e.target.files[0];
   if (file) {
-    const reader = new FileReader();
-    reader.onloadend = () => setProfilePreview(reader.result);
-    reader.readAsDataURL(file);
-
-    setEditUser(prev => ({ ...prev, profilePic: file }));
+    setProfilePreview(URL.createObjectURL(file)); // preview
+    setEditUser((prev) => ({ ...prev, profilePic: file })); // backend save ke liye
   }
 };
 
@@ -207,25 +205,25 @@ const saveProfile = async () => {
       formData.append("profilePic", editUser.profilePic);
     }
 
-    // get token from localStorage or context
-    const token = localStorage.getItem("authToken");  // ✅ correct key
+    const token = localStorage.getItem("authToken");
 
-
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/profile`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/profile/update`, {
       method: "PUT",
       body: formData,
       headers: {
-        Authorization: `Bearer ${token}`, // ⚡ important
-        // DO NOT set Content-Type manually when using FormData
+        Authorization: `Bearer ${token}`,
+        // ⚠️ Don't add Content-Type here, browser will handle it for FormData
       },
     });
 
     const data = await res.json();
 
-    if (res.ok) {
-      alert("Profile updated successfully");
-      setEditProfile(false);
-    } else {
+  if (res.ok) {
+  alert("Profile updated successfully");
+  setUser((prev) => ({ ...prev, ...data.user })); // context update
+  setEditProfile(false);
+}
+ else {
       alert(data.message || "Error updating profile");
     }
   } catch (err) {
@@ -332,18 +330,16 @@ const saveProfile = async () => {
             <div className="flex flex-col md:flex-row items-center">
               <div className="flex-shrink-0 mb-6 md:mb-0 md:mr-8 relative">
                 <div className="relative">
-             <img
+  <img
   className="h-24 w-24 rounded-full border-4 border-white shadow-lg object-cover"
   src={
-    user?.profilePic ||
-    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?..."
+    profilePreview || 
+    user?.profilePic || 
+    "https://via.placeholder.com/150"
   }
   alt="Instructor profile"
-  onError={(e) => {
-    e.currentTarget.src =
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?...";
-  }}
 />
+
 
                   <button
                     onClick={() => setEditProfile(true)}
@@ -838,21 +834,18 @@ const saveProfile = async () => {
        {/* Profile Picture */}
 <div className="flex flex-col items-center mb-4">
   <div className="relative">
-    <img
-      className="h-24 w-24 rounded-full border-4 border-white shadow-md object-cover"
-      src={
-        profilePreview
-          ? profilePreview.startsWith("http")
-            ? profilePreview
-            : `${import.meta.env.VITE_API_URL.replace("/api", "")}/${profilePreview}`
-          : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-      }
-      alt="Profile preview"
-      onError={(e) => {
-        e.currentTarget.src =
-          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80";
-      }}
-    />
+{user?.profilePic ? (
+  <img
+    className="h-24 w-24 rounded-full border-4 border-white shadow-lg object-cover"
+    src={user.profilePic}
+    alt="Instructor profile"
+  />
+) : (
+  <div className="h-24 w-24 rounded-full border-4 border-white shadow-lg bg-gray-200 flex items-center justify-center text-gray-500 font-bold">
+    {user?.name ? user.name[0].toUpperCase() : "?"}
+  </div>
+)}
+
     <label className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 cursor-pointer">
       <PencilIcon className="h-4 w-4 text-indigo-600" />
       <input

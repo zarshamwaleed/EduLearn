@@ -107,18 +107,15 @@ const saveProfile = async () => {
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 sm:p-8 text-white">
             <div className="flex flex-col sm:flex-row items-center">
               <div className="relative mb-4 sm:mb-0 sm:mr-6">
- <img
-  src={
-    user.profilePic
-      ? `${import.meta.env.VITE_API_URL.replace("/api", "")}/${user.profilePic}`
-      : "/default-profile-pic.jpg"
-  }
+<img
+  src={user?.profilePic || "/default-profile-pic.jpg"}
   alt="Profile"
   className="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-white/30 shadow-lg object-cover"
   onError={(e) => {
     e.currentTarget.src = "/default-profile-pic.jpg";
   }}
 />
+
 
 
                 <label className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 cursor-pointer transition-colors">
