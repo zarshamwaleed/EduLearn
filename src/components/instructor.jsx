@@ -1,6 +1,8 @@
+// frontend/src/pages/instructor.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api";
+import api from "../api"; // path sahi rakhna
+
 import { useAuth } from "../context/AuthContext";
 import {
   BookOpenIcon,
@@ -31,8 +33,8 @@ import {
   Cell,
   AreaChart,
   Area,
-  Legend,
-} from "recharts";
+  Legend
+} from 'recharts';
 
 const InstructorDashboard = () => {
   const { user, setUser, getToken, isAuthenticated, loading: authLoading } = useAuth();
@@ -45,93 +47,96 @@ const InstructorDashboard = () => {
   const [analytics, setAnalytics] = useState(null);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const [profilePreview, setProfilePreview] = useState("");
+const [profilePreview, setProfilePreview] = useState(""); // for showing the image in modal
+const [profileFile, setProfileFile] = useState(null); // for uploading to backend
+
 
   const filteredCourses = courses.filter(
     (course) => String(course.instructorId) === String(user._id)
   );
 
-  // Sample data for graphs
+  // Sample data for graphs (you can replace this with real data from your backend)
   const monthlyRevenueData = [
-    { month: "Jan", revenue: 4000, students: 240 },
-    { month: "Feb", revenue: 3000, students: 139 },
-    { month: "Mar", revenue: 2000, students: 980 },
-    { month: "Apr", revenue: 2780, students: 390 },
-    { month: "May", revenue: 1890, students: 480 },
-    { month: "Jun", revenue: 2390, students: 380 },
-    { month: "Jul", revenue: 3490, students: 430 },
+    { month: 'Jan', revenue: 4000, students: 240 },
+    { month: 'Feb', revenue: 3000, students: 139 },
+    { month: 'Mar', revenue: 2000, students: 980 },
+    { month: 'Apr', revenue: 2780, students: 390 },
+    { month: 'May', revenue: 1890, students: 480 },
+    { month: 'Jun', revenue: 2390, students: 380 },
+    { month: 'Jul', revenue: 3490, students: 430 },
   ];
 
-  const coursePerformanceData = filteredCourses.length > 0
-    ? filteredCourses.map((course, index) => ({
-        name: course.title.slice(0, 20) + (course.title.length > 20 ? "..." : ""),
-        students: Math.floor(Math.random() * 100) + 10,
-        rating: parseFloat((Math.random() * 2 + 3).toFixed(1)),
-        revenue: Math.floor(Math.random() * 5000) + 1000,
-      }))
-    : [
-        { name: "React Fundamentals", students: 45, rating: 4.5, revenue: 2250 },
-        { name: "Advanced JavaScript", students: 32, rating: 4.2, revenue: 1600 },
-        { name: "Node.js Masterclass", students: 28, rating: 4.8, revenue: 1400 },
-        { name: "Web Development", students: 55, rating: 4.1, revenue: 2750 },
-      ];
+  const coursePerformanceData = filteredCourses.length > 0 ? filteredCourses.map((course, index) => ({
+    name: course.title.slice(0, 20) + (course.title.length > 20 ? '...' : ''),
+    students: Math.floor(Math.random() * 100) + 10,
+    rating: parseFloat((Math.random() * 2 + 3).toFixed(1)),
+    revenue: Math.floor(Math.random() * 5000) + 1000,
+  })) : [
+    { name: 'React Fundamentals', students: 45, rating: 4.5, revenue: 2250 },
+    { name: 'Advanced JavaScript', students: 32, rating: 4.2, revenue: 1600 },
+    { name: 'Node.js Masterclass', students: 28, rating: 4.8, revenue: 1400 },
+    { name: 'Web Development', students: 55, rating: 4.1, revenue: 2750 },
+  ];
 
   const studentEngagementData = [
-    { name: "Active", value: 65, color: "#10B981" },
-    { name: "Completed", value: 25, color: "#3B82F6" },
-    { name: "Dropped", value: 10, color: "#EF4444" },
+    { name: 'Active', value: 65, color: '#10B981' },
+    { name: 'Completed', value: 25, color: '#3B82F6' },
+    { name: 'Dropped', value: 10, color: '#EF4444' },
   ];
 
   const weeklyEnrollmentData = [
-    { week: "Week 1", enrollments: 12 },
-    { week: "Week 2", enrollments: 19 },
-    { week: "Week 3", enrollments: 8 },
-    { week: "Week 4", enrollments: 15 },
-    { week: "Week 5", enrollments: 22 },
-    { week: "Week 6", enrollments: 18 },
-    { week: "Week 7", enrollments: 25 },
+    { week: 'Week 1', enrollments: 12 },
+    { week: 'Week 2', enrollments: 19 },
+    { week: 'Week 3', enrollments: 8 },
+    { week: 'Week 4', enrollments: 15 },
+    { week: 'Week 5', enrollments: 22 },
+    { week: 'Week 6', enrollments: 18 },
+    { week: 'Week 7', enrollments: 25 },
   ];
 
   const ratingDistributionData = [
-    { rating: "5 Stars", count: 45, color: "#F59E0B" },
-    { rating: "4 Stars", count: 32, color: "#10B981" },
-    { rating: "3 Stars", count: 18, color: "#6366F1" },
-    { rating: "2 Stars", count: 8, color: "#EF4444" },
-    { rating: "1 Star", count: 3, color: "#6B7280" },
+    { rating: '5 Stars', count: 45, color: '#F59E0B' },
+    { rating: '4 Stars', count: 32, color: '#10B981' },
+    { rating: '3 Stars', count: 18, color: '#6366F1' },
+    { rating: '2 Stars', count: 8, color: '#EF4444' },
+    { rating: '1 Star', count: 3, color: '#6B7280' },
   ];
 
+  // Sync editUser with user from context
   useEffect(() => {
     setEditUser(user);
   }, [user]);
 
+  // Fetch courses from backend
   const fetchCourses = async () => {
-    try {
-      const response = await api.get("/courses");
-      setCourses(Array.isArray(response.data) ? response.data : []);
-    } catch (err) {
-      console.error("Error fetching courses:", err.response?.data || err.message);
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        setError("Unauthorized: Please log in again");
-        localStorage.removeItem("authToken");
-        navigate("/login");
-      } else {
-        setError(`Failed to load courses: ${err.response?.data?.message || err.message}`);
-      }
+  try {
+    const response = await api.get("/courses");
+    setCourses(Array.isArray(response.data) ? response.data : []);
+  } catch (err) {
+    console.error("Error fetching courses:", err.response?.data || err.message);
+    if (err.response?.status === 401 || err.response?.status === 403) {
+      setError("Unauthorized: Please log in again");
+      localStorage.removeItem("authToken");
+      navigate("/login");
+    } else {
+      setError(`Failed to load courses: ${err.response?.data?.message || err.message}`);
     }
-  };
+  }
+};
 
-  const fetchAnalytics = async () => {
-    try {
-      const response = await api.get("/analytics/instructor");
-      setAnalytics(response.data);
-    } catch (err) {
-      console.error("Error fetching analytics:", err.response?.data || err.message);
-      setError(`Failed to load analytics: ${err.response?.data?.message || err.message}`);
-    }
-  };
+  // Fetch analytics from backend
+const fetchAnalytics = async () => {
+  try {
+    const response = await api.get("/analytics/instructor");
+    setAnalytics(response.data);
+  } catch (err) {
+    console.error("Error fetching analytics:", err.response?.data || err.message);
+    setError(`Failed to load analytics: ${err.response?.data?.message || err.message}`);
+  }
+};
 
   useEffect(() => {
-    console.log("Analytics state:", analytics);
+    console.log("Analytics state:", analytics); // Debug
     if (!authLoading && !isAuthenticated) {
       setError("User not authenticated");
       navigate("/login");
@@ -147,17 +152,16 @@ const InstructorDashboard = () => {
     setShowCreateForm(true);
   };
 
-  const handleDeleteCourse = async (courseId) => {
-    if (!window.confirm("Are you sure you want to delete this course?")) return;
-    try {
-      await api.delete(`/create-course/${courseId}`);
-      setCourses(courses.filter((course) => course._id !== courseId));
-    } catch (err) {
-      console.error("Error deleting course:", err.response?.data || err.message);
-      setError(`Failed to delete course: ${err.response?.data?.message || err.message}`);
-    }
-  };
-
+const handleDeleteCourse = async (courseId) => {
+  if (!window.confirm("Are you sure you want to delete this course?")) return;
+  try {
+    await api.delete(`/create-course/${courseId}`);
+    setCourses(courses.filter((course) => course._id !== courseId));
+  } catch (err) {
+    console.error("Error deleting course:", err.response?.data || err.message);
+    setError(`Failed to delete course: ${err.response?.data?.message || err.message}`);
+  }
+};
   const handleCloseForm = () => {
     setShowCreateForm(false);
   };
@@ -169,49 +173,69 @@ const InstructorDashboard = () => {
     });
   };
 
-  useEffect(() => {
-    if (editUser?.profilePic && typeof editUser.profilePic === "string") {
-      setProfilePreview(`${import.meta.env.VITE_API_URL.replace("/api", "")}/${editUser.profilePic}`);
-    } else {
-      setProfilePreview("");
+
+
+
+// Sync with editUser when it changes
+useEffect(() => {
+  if (editUser?.profilePic && typeof editUser.profilePic === "string") {
+    setProfilePreview(`${import.meta.env.VITE_API_URL.replace("/api", "")}/${editUser.profilePic}`);
+  } else {
+    setProfilePreview(""); // default placeholder
+  }
+}, [editUser?.profilePic]);
+
+const handleProfileImageChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onloadend = () => setProfilePreview(reader.result);
+    reader.readAsDataURL(file);
+
+    setEditUser(prev => ({ ...prev, profilePic: file }));
+  }
+};
+
+const saveProfile = async () => {
+  try {
+    const formData = new FormData();
+    formData.append("name", editUser.name);
+    formData.append("email", editUser.email);
+    formData.append("bio", editUser.bio || "");
+
+    if (editUser.profilePic instanceof File) {
+      formData.append("profilePic", editUser.profilePic);
     }
-  }, [editUser?.profilePic]);
 
-  const handleProfileImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setProfilePreview(reader.result);
-      reader.readAsDataURL(file);
-      setEditUser((prev) => ({ ...prev, profilePic: file }));
-    }
-  };
+    // get token from localStorage or context
+    const token = localStorage.getItem("authToken");  // ✅ correct key
 
-  const saveProfile = async () => {
-    try {
-      const formData = new FormData();
-      formData.append("name", editUser.name || "");
-      formData.append("email", editUser.email || "");
-      formData.append("bio", editUser.bio || "");
-      if (editUser.profilePic instanceof File) {
-        formData.append("profilePic", editUser.profilePic);
-      }
 
-      const token = getToken();
-      const response = await api.put("/auth/profile", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/profile`, {
+      method: "PUT",
+      body: formData,
+      headers: {
+        Authorization: `Bearer ${token}`, // ⚡ important
+        // DO NOT set Content-Type manually when using FormData
+      },
+    });
 
-      setUser(response.data);
-      setEditProfile(false);
+    const data = await res.json();
+
+    if (res.ok) {
       alert("Profile updated successfully");
-    } catch (err) {
-      console.error("Error saving profile:", err.response?.data || err.message);
-      setError(`Failed to save profile: ${err.response?.data?.message || err.message}`);
+      setEditProfile(false);
+    } else {
+      alert(data.message || "Error updating profile");
     }
-  };
+  } catch (err) {
+    console.error("Error saving profile:", err);
+    alert("Server error");
+  }
+};
+
+
+
 
   const renderStars = (rating) => {
     return Array(5)
@@ -242,7 +266,7 @@ const InstructorDashboard = () => {
           <p className="text-gray-600 font-medium">{`${label}`}</p>
           {payload.map((entry, index) => (
             <p key={index} style={{ color: entry.color }}>
-              {`${entry.dataKey}: ${entry.dataKey === "revenue" ? formatCurrency(entry.value) : entry.value}`}
+              {`${entry.dataKey}: ${entry.dataKey === 'revenue' ? formatCurrency(entry.value) : entry.value}`}
             </p>
           ))}
         </div>
@@ -299,6 +323,8 @@ const InstructorDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+   
+
       <div className="px-6 py-8 w-[1410px] ml-24">
         {/* Welcome Banner */}
         <div className="bg-gradient-to-r from-indigo-600 to-purple-700 rounded-xl shadow-lg overflow-hidden mb-8">
@@ -306,18 +332,19 @@ const InstructorDashboard = () => {
             <div className="flex flex-col md:flex-row items-center">
               <div className="flex-shrink-0 mb-6 md:mb-0 md:mr-8 relative">
                 <div className="relative">
-                  <img
-                    className="h-24 w-24 rounded-full border-4 border-white shadow-lg object-cover"
-                    src={
-                      user?.profilePic ||
-                      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?..."
-                    }
-                    alt="Instructor profile"
-                    onError={(e) => {
-                      e.currentTarget.src =
-                        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?...";
-                    }}
-                  />
+             <img
+  className="h-24 w-24 rounded-full border-4 border-white shadow-lg object-cover"
+  src={
+    user?.profilePic ||
+    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?..."
+  }
+  alt="Instructor profile"
+  onError={(e) => {
+    e.currentTarget.src =
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?...";
+  }}
+/>
+
                   <button
                     onClick={() => setEditProfile(true)}
                     className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 transition-colors"
@@ -477,18 +504,19 @@ const InstructorDashboard = () => {
                       className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200"
                     >
                       <div className="h-48 w-full overflow-hidden">
-                        <img
-                          src={
-                            course?.image_url ||
-                            "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
-                          }
-                          alt={course?.title || "Course image"}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src =
-                              "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80";
-                          }}
-                        />
+                     <img
+  src={
+    course?.image_url ||
+    "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80"
+  }
+  alt={course?.title || "Course image"}
+  className="w-full h-full object-cover"
+  onError={(e) => {
+    e.currentTarget.src =
+      "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80";
+  }}
+/>
+
                       </div>
                       <div className="p-4">
                         <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-1">
@@ -583,8 +611,7 @@ const InstructorDashboard = () => {
             </div>
           </>
         )}
-
-        {/* Analytics Tab */}
+{/* Analytics Tab with Students & Revenue Graph */}
         {activeTab === "analytics" && (
           <div className="space-y-8">
             {/* Stats Cards */}
@@ -643,7 +670,7 @@ const InstructorDashboard = () => {
               </div>
             </div>
 
-            {/* Main Analytics Graph */}
+            {/* Main Analytics Graph - Students & Revenue */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-semibold text-gray-800">Students & Revenue Analytics</h3>
@@ -658,79 +685,82 @@ const InstructorDashboard = () => {
                   </span>
                 </div>
               </div>
+              
+              {/* Check if analytics data exists */}
               {analytics?.stats ? (
                 <div className="h-96">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={[
-                        {
-                          name: "Your Analytics",
-                          students: analytics.stats.totalStudents || 0,
-                          revenue: analytics.stats.totalRevenue || 0,
-                        },
-                      ]}
+                    <BarChart 
+                      data={[{
+                        name: 'Your Analytics',
+                        students: analytics.stats.totalStudents || 0,
+                        revenue: analytics.stats.totalRevenue || 0
+                      }]}
                       margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                      <XAxis
-                        dataKey="name"
+                      <XAxis 
+                        dataKey="name" 
                         stroke="#6B7280"
                         tick={{ fontSize: 14 }}
-                        axisLine={{ stroke: "#D1D5DB" }}
+                        axisLine={{ stroke: '#D1D5DB' }}
                       />
-                      <YAxis
+                      <YAxis 
                         yAxisId="students"
                         orientation="left"
                         stroke="#3B82F6"
-                        label={{
-                          value: "Total Students",
-                          angle: -90,
-                          position: "insideLeft",
-                          style: { textAnchor: "middle", fill: "#3B82F6" },
+                        label={{ 
+                          value: 'Total Students', 
+                          angle: -90, 
+                          position: 'insideLeft',
+                          style: { textAnchor: 'middle', fill: '#3B82F6' }
                         }}
-                        axisLine={{ stroke: "#3B82F6" }}
-                        tickLine={{ stroke: "#3B82F6" }}
+                        axisLine={{ stroke: '#3B82F6' }}
+                        tickLine={{ stroke: '#3B82F6' }}
                       />
-                      <YAxis
+                      <YAxis 
                         yAxisId="revenue"
                         orientation="right"
                         stroke="#10B981"
-                        label={{
-                          value: "Total Revenue ($)",
-                          angle: 90,
-                          position: "insideRight",
-                          style: { textAnchor: "middle", fill: "#10B981" },
+                        label={{ 
+                          value: 'Total Revenue ($)', 
+                          angle: 90, 
+                          position: 'insideRight',
+                          style: { textAnchor: 'middle', fill: '#10B981' }
                         }}
-                        axisLine={{ stroke: "#10B981" }}
-                        tickLine={{ stroke: "#10B981" }}
+                        axisLine={{ stroke: '#10B981' }}
+                        tickLine={{ stroke: '#10B981' }}
                         tickFormatter={(value) => `$${value}`}
                       />
-                      <Tooltip
+                      <Tooltip 
                         formatter={(value, name) => [
-                          name === "students" ? `${value} Students` : formatCurrency(value),
-                          name === "students" ? "Total Students" : "Total Revenue",
+                          name === 'students' ? `${value} Students` : formatCurrency(value),
+                          name === 'students' ? 'Total Students' : 'Total Revenue'
                         ]}
-                        labelFormatter={() => "Your Performance"}
+                        labelFormatter={() => 'Your Performance'}
                         contentStyle={{
-                          backgroundColor: "white",
-                          border: "1px solid #E5E7EB",
-                          borderRadius: "8px",
-                          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                          backgroundColor: 'white',
+                          border: '1px solid #E5E7EB',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                         }}
                       />
-                      <Legend wrapperStyle={{ paddingTop: "20px" }} iconType="rect" />
-                      <Bar
+                      <Legend 
+                        wrapperStyle={{ paddingTop: '20px' }}
+                        iconType="rect"
+                      />
+                      <Bar 
                         yAxisId="students"
-                        dataKey="students"
-                        fill="#3B82F6"
+                        dataKey="students" 
+                        fill="#3B82F6" 
                         name="Total Students"
                         radius={[4, 4, 0, 0]}
                         maxBarSize={80}
                       />
-                      <Bar
+                      <Bar 
                         yAxisId="revenue"
-                        dataKey="revenue"
-                        fill="#10B981"
+                        dataKey="revenue" 
+                        fill="#10B981" 
                         name="Total Revenue"
                         radius={[4, 4, 0, 0]}
                         maxBarSize={80}
@@ -748,7 +778,7 @@ const InstructorDashboard = () => {
                 </div>
               )}
 
-              {/* Summary Cards */}
+              {/* Summary Cards below the chart */}
               <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="text-center p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
                   <div className="flex items-center justify-center mb-3">
@@ -758,8 +788,11 @@ const InstructorDashboard = () => {
                   <p className="text-4xl font-bold text-blue-800 mb-2">
                     {analytics?.stats.totalStudents || 0}
                   </p>
-                  <p className="text-sm text-blue-600">Students enrolled in your courses</p>
+                  <p className="text-sm text-blue-600">
+                    Students enrolled in your courses
+                  </p>
                 </div>
+                
                 <div className="text-center p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-xl border border-green-200">
                   <div className="flex items-center justify-center mb-3">
                     <CurrencyDollarIcon className="h-8 w-8 text-green-600 mr-3" />
@@ -768,7 +801,9 @@ const InstructorDashboard = () => {
                   <p className="text-4xl font-bold text-green-800 mb-2">
                     {analytics?.stats.totalRevenue ? formatCurrency(analytics.stats.totalRevenue) : "$0"}
                   </p>
-                  <p className="text-sm text-green-600">Total earnings from all courses</p>
+                  <p className="text-sm text-green-600">
+                    Total earnings from all courses
+                  </p>
                 </div>
               </div>
             </div>
@@ -777,104 +812,117 @@ const InstructorDashboard = () => {
 
         {/* Create/Edit Course Modal */}
         {showCreateForm && (
-          <CreateCourseForm onClose={handleCloseForm} courseToEdit={courseToEdit} />
+          <CreateCourseForm
+            onClose={handleCloseForm}
+            courseToEdit={courseToEdit}
+          />
         )}
 
         {/* Edit Profile Modal */}
-        {editProfile && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-gray-800">Edit Profile</h2>
-                  <button
-                    onClick={() => setEditProfile(false)}
-                    className="text-gray-400 hover:text-gray-500 rounded-full p-1 hover:bg-gray-100"
-                  >
-                    <XMarkIcon className="h-6 w-6" />
-                  </button>
-                </div>
-                <div className="flex flex-col items-center mb-4">
-                  <div className="relative">
-                    <img
-                      className="h-24 w-24 rounded-full border-4 border-white shadow-md object-cover"
-                      src={
-                        profilePreview
-                          ? profilePreview.startsWith("data:")
-                            ? profilePreview
-                            : `${import.meta.env.VITE_API_URL.replace("/api", "")}/${profilePreview}`
-                          : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                      }
-                      alt="Profile preview"
-                      onError={(e) => {
-                        e.currentTarget.src =
-                          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80";
-                      }}
-                    />
-                    <label className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 cursor-pointer">
-                      <PencilIcon className="h-4 w-4 text-indigo-600" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleProfileImageChange}
-                        className="sr-only"
-                      />
-                    </label>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={editUser?.name || ""}
-                      onChange={handleProfileChange}
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={editUser?.email || ""}
-                      onChange={handleProfileChange}
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
-                    <textarea
-                      name="bio"
-                      rows={4}
-                      value={editUser?.bio || ""}
-                      onChange={handleProfileChange}
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-                      placeholder="Tell students about your background and expertise..."
-                    />
-                  </div>
-                </div>
-                <div className="pt-4 flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setEditProfile(false)}
-                    className="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={saveProfile}
-                    className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                  >
-                    Save Profile
-                  </button>
-                </div>
-              </div>
-            </div>
+     {/* Edit Profile Modal */}
+{editProfile && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-800">Edit Profile</h2>
+          <button
+            onClick={() => setEditProfile(false)}
+            className="text-gray-400 hover:text-gray-500 rounded-full p-1 hover:bg-gray-100"
+          >
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+        </div>
+
+       {/* Profile Picture */}
+<div className="flex flex-col items-center mb-4">
+  <div className="relative">
+    <img
+      className="h-24 w-24 rounded-full border-4 border-white shadow-md object-cover"
+      src={
+        profilePreview
+          ? profilePreview.startsWith("http")
+            ? profilePreview
+            : `${import.meta.env.VITE_API_URL.replace("/api", "")}/${profilePreview}`
+          : "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+      }
+      alt="Profile preview"
+      onError={(e) => {
+        e.currentTarget.src =
+          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80";
+      }}
+    />
+    <label className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 cursor-pointer">
+      <PencilIcon className="h-4 w-4 text-indigo-600" />
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleProfileImageChange}
+        className="sr-only"
+      />
+    </label>
+  </div>
+</div>
+
+
+        {/* Form Fields */}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <input
+              type="text"
+              name="name"
+              value={editUser?.name || ""}
+              onChange={handleProfileChange}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+            />
           </div>
-        )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={editUser?.email || ""}
+              onChange={handleProfileChange}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+            <textarea
+              name="bio"
+              rows={4}
+              value={editUser?.bio || ""}
+              onChange={handleProfileChange}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+              placeholder="Tell students about your background and expertise..."
+            />
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className="pt-4 flex justify-end space-x-3">
+          <button
+            type="button"
+            onClick={() => setEditProfile(false)}
+            className="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={saveProfile}
+            className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            Save Profile
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
       </div>
     </div>
   );
