@@ -78,7 +78,7 @@ export default function CreateCourseForm({ onClose, courseToEdit }) {
 
      const API_URL = import.meta.env.VITE_API_URL;
 
-const res = await fetch(`${API_URL}/api/create-course`, {
+const res = await fetch(`${API_URL}/create-course`, {
   method: "POST",
   headers: {
     Authorization: `Bearer ${token}`,
