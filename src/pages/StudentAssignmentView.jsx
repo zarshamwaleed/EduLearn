@@ -127,9 +127,10 @@ const StudentAssignmentView = () => {
         throw new Error('No authentication token found');
       }
 
-    const response = await api.get(`/assignment-submissions/${submissionId}/download`, {
-  responseType: 'blob', // required for file downloads
+const response = await api.get(`/submissions/${submissionId}/download`, {
+  responseType: "blob",
 });
+
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
