@@ -123,25 +123,38 @@ const handleDownloadSubmission = async (submissionId, assignment) => {
 
   try {
     const token = getToken();
-    if (!token) throw new Error("No authentication token found");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
 
-    const response = await api.get(`/assignment-submissions/${submissionId}/download`);
+    // ✅ No need for responseType: "blob", we're just fetching JSON with signed URL
+const response = await api.get(`/assignment-submissions/${submissionId}/download`);
+
     const signedUrl = response.data?.signedUrl;
 
-    if (!signedUrl) throw new Error("No signed URL returned from server");
+    if (!signedUrl) {
+      throw new Error("No signed URL returned from server");
+    }
 
-    // ✅ Directly open signed URL in new tab
-    window.open(signedUrl, "_blank");
+    // ✅ Open the Cloudinary secure URL in a new tab (or trigger a direct download)
+    const link = document.createElement("a");
+    link.href = signedUrl;
+    link.download = `${assignment?.title || "submission"}_file`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
     setSuccessMessage("Submission download started!");
     setError("");
   } catch (err) {
     console.error("Error downloading submission:", err);
     setError(err.response?.data?.message || "Failed to download submission");
-    if (err.response?.status === 401 || err.response?.status === 403) navigate("/login");
+
+    if (err.response?.status === 401 || err.response?.status === 403) {
+      navigate("/login");
+    }
   }
 };
-
 
 
   // Download assignment file
