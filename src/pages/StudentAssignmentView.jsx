@@ -115,44 +115,46 @@ const StudentAssignmentView = () => {
   };
 
   // Download submitted file
-  const handleDownloadSubmission = async (submissionId, assignment) => {
-    if (!submissionId) {
-      setError('No submission found to download.');
-      return;
+const handleDownloadSubmission = async (submissionId, assignment) => {
+  if (!submissionId) {
+    setError("No submission found to download.");
+    return;
+  }
+
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error("No authentication token found");
     }
 
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
+    // ✅ No need for responseType: "blob", we're just fetching JSON with signed URL
+    const response = await api.get(`/submissions/${submissionId}/download`);
+    const signedUrl = response.data?.signedUrl;
 
-const response = await api.get(`/submissions/${submissionId}/download`, {
-  responseType: "blob",
-});
-
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute(
-        'download',
-        `${assignment.title}_submission${response.headers['content-disposition']?.match(/filename="(.+)"/)?.[1] || '.pdf'}`
-      );
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      setSuccessMessage('Submission downloaded successfully!');
-      setError('');
-    } catch (err) {
-      console.error('Error downloading submission:', err);
-      setError(err.response?.data?.message || 'Failed to download submission');
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        navigate('/login');
-      }
+    if (!signedUrl) {
+      throw new Error("No signed URL returned from server");
     }
-  };
+
+    // ✅ Open the Cloudinary secure URL in a new tab (or trigger a direct download)
+    const link = document.createElement("a");
+    link.href = signedUrl;
+    link.download = `${assignment?.title || "submission"}_file`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setSuccessMessage("Submission download started!");
+    setError("");
+  } catch (err) {
+    console.error("Error downloading submission:", err);
+    setError(err.response?.data?.message || "Failed to download submission");
+
+    if (err.response?.status === 401 || err.response?.status === 403) {
+      navigate("/login");
+    }
+  }
+};
+
 
   // Download assignment file
   const handleDownloadAssignment = async (assignmentId, assignment) => {
