@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from "../api";
+// import { useParams } from "react-router-dom";
 import {
   ArrowLeftIcon,
   PencilIcon,
@@ -360,7 +361,7 @@ function CourseDetail() {
   const role = user?.role || 'student';
   const { id } = useParams();
   const navigate = useNavigate();
-
+  const { courseId } = useParams()
   const [course, setCourse] = useState(null);
   const [content, setContent] = useState([]);
   const [progressData, setProgressData] = useState({
@@ -468,18 +469,30 @@ try {
   console.error('Error updating progress:', err);
 }
   };
-const handleDownload = (fileUrl, fileName) => {
+const handleView = async (courseId, fileId) => {
   try {
-    const link = document.createElement("a");
-    link.href = fileUrl; // ✅ direct Cloudinary URL
-    link.setAttribute("download", fileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const token = localStorage.getItem("token");
+    const res = await api.get(`/upload/${courseId}/download/${fileId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.data?.signedUrl) {
+      // File open karne ke liye (browser me new tab me)
+      window.open(res.data.signedUrl, "_blank");
+
+      // Agar aap chahein ki download force ho to:
+      // const link = document.createElement("a");
+      // link.href = res.data.signedUrl;
+      // link.download = "";
+      // link.click();
+    } else {
+      console.error("Signed URL not received");
+    }
   } catch (err) {
-    console.error("Error downloading file:", err);
+    console.error("Error fetching signed URL:", err);
   }
 };
+
 
 
 
@@ -752,47 +765,46 @@ const handleDownload = (fileUrl, fileName) => {
                         </div>
                       </div>
                       
-                      <div className="flex items-center space-x-3 ml-4">
-     <button
-  onClick={() => handleDownload(item.file_url, item.file_name)}
-  className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded-xl text-sm font-medium transition-colors duration-200 flex items-center space-x-2"
->
-  <PlayIcon className="w-4 h-4" />
-  <span>View</span>
-</button>
+                    <div className="flex items-center space-x-3 ml-4">
+  {/* ✅ Correct View Button */}
+  <button
+    onClick={() => handleView(courseId, item.content_id)}
+    className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-xl text-sm font-medium transition-colors duration-200"
+  >
+    View
+  </button>
 
+  {role === 'instructor' && (
+    <button
+      onClick={() => {
+        setSelectedContentId(item.content_id);
+        setShowDeleteModal(true);
+      }}
+      className="bg-red-100 hover:bg-red-200 text-red-700 p-2 rounded-xl transition-colors duration-200"
+    >
+      <TrashIcon className="h-5 w-5" />
+    </button>
+  )}
 
-                        
-                        {role === 'instructor' && (
-                          <button
-                            onClick={() => {
-                              setSelectedContentId(item.content_id);
-                              setShowDeleteModal(true);
-                            }}
-                            className="bg-red-100 hover:bg-red-200 text-red-700 p-2 rounded-xl transition-colors duration-200"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
-                        )}
-                        
-                        {role === 'student' && (
-                          <button
-                            onClick={() => handleToggleComplete(item.content_id)}
-                            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
-                              isItemCompleted 
-                                ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' 
-                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                            }`}
-                          >
-                            {isItemCompleted ? (
-                              <CheckCircleIconSolid className="w-4 h-4" />
-                            ) : (
-                              <CheckIcon className="w-4 h-4" />
-                            )}
-                            <span>{isItemCompleted ? 'Completed' : 'Mark Complete'}</span>
-                          </button>
-                        )}
-                      </div>
+  {role === 'student' && (
+    <button
+      onClick={() => handleToggleComplete(item.content_id)}
+      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
+        isItemCompleted 
+          ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' 
+          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+      }`}
+    >
+      {isItemCompleted ? (
+        <CheckCircleIconSolid className="w-4 h-4" />
+      ) : (
+        <CheckIcon className="w-4 h-4" />
+      )}
+      <span>{isItemCompleted ? 'Completed' : 'Mark Complete'}</span>
+    </button>
+  )}
+</div>
+
                     </div>
                   </div>
                 );
