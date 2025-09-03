@@ -387,7 +387,15 @@ function CourseDetail() {
     setCourse(courseResponse.data);
 
     // Fetch course content
-    const contentResponse = await api.get(`/upload/${id}`);
+   const token = getToken();
+
+const contentResponse = await api.get(`/upload/${id}`, {
+  headers: {
+    Authorization: `Bearer ${token}`, // ✅ Attach token
+  },
+});
+setContent(contentResponse.data);
+
     setContent(contentResponse.data);
 
     if (role === 'student') {
@@ -460,6 +468,22 @@ try {
   console.error('Error updating progress:', err);
 }
   };
+const handleDownload = (fileUrl, fileName) => {
+  try {
+    const link = document.createElement("a");
+    link.href = fileUrl; // ✅ direct Cloudinary URL
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (err) {
+    console.error("Error downloading file:", err);
+  }
+};
+
+
+
+
 
   const getContentTypeIcon = (type) => {
     const iconClasses = "h-6 w-6";
@@ -729,15 +753,15 @@ try {
                       </div>
                       
                       <div className="flex items-center space-x-3 ml-4">
-                        <a
-                          href={item.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded-xl text-sm font-medium transition-colors duration-200 flex items-center space-x-2"
-                        >
-                          <PlayIcon className="w-4 h-4" />
-                          <span>View</span>
-                        </a>
+     <button
+  onClick={() => handleDownload(item.file_url, item.file_name)}
+  className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded-xl text-sm font-medium transition-colors duration-200 flex items-center space-x-2"
+>
+  <PlayIcon className="w-4 h-4" />
+  <span>View</span>
+</button>
+
+
                         
                         {role === 'instructor' && (
                           <button
