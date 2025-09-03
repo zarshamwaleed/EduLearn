@@ -128,7 +128,8 @@ const handleDownloadSubmission = async (submissionId, assignment) => {
     }
 
     // ✅ No need for responseType: "blob", we're just fetching JSON with signed URL
-    const response = await api.get(`/submissions/${submissionId}/download`);
+const response = await api.get(`/assignment-submissions/${submissionId}/download`);
+
     const signedUrl = response.data?.signedUrl;
 
     if (!signedUrl) {
