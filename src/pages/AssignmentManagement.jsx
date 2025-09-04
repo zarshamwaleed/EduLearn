@@ -154,27 +154,54 @@ const AssignmentManagement = () => {
   }
 };
   // Download a submission file
- const handleDownload = async (submissionId, studentName) => {
+const handleDownload = async (submissionId, studentName) => {
   try {
+    // First, get the signed URL from your backend
     const response = await api.get(
-      `/assignment-submissions/${submissionId}/download`,
-      {
-        responseType: "blob", // blob download ke liye zaroori
-      }
+      `/assignment-submissions/${submissionId}/download`
+      // Note: No responseType: "blob" here since we're getting JSON with signedUrl
     );
 
-    // File ka naam content-disposition header se extract karna
-    const fileName =
-      response.headers["content-disposition"]?.match(/filename="(.+)"/)?.[1] ||
-      `${studentName}_submission.pdf`;
+    console.log("Response from backend:", response.data);
 
-    // File download karwana
-    const url = window.URL.createObjectURL(new Blob([response.data]));
+    if (!response.data.signedUrl) {
+      throw new Error("No signed URL received from server");
+    }
+
+    // Now use the signed URL to download the file
+    const fileResponse = await fetch(response.data.signedUrl);
+    
+    if (!fileResponse.ok) {
+      throw new Error(`Failed to download file: ${fileResponse.status} ${fileResponse.statusText}`);
+    }
+
+    // Get the file as a blob
+    const blob = await fileResponse.blob();
+
+    // Extract file extension from the original file URL if possible
+    let fileExtension = 'pdf'; // default
+    try {
+      // Try to extract extension from the Cloudinary URL
+      const urlParts = response.data.signedUrl.split('?')[0]; // Remove query params
+      const pathParts = urlParts.split('.');
+      if (pathParts.length > 1) {
+        fileExtension = pathParts.pop();
+      }
+    } catch (e) {
+      console.warn("Could not extract file extension, using default");
+    }
+
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", fileName);
+    link.setAttribute("download", `${studentName}_submission.${fileExtension}`);
+    
+    // Trigger download
     document.body.appendChild(link);
     link.click();
+    
+    // Cleanup
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
 
@@ -182,7 +209,8 @@ const AssignmentManagement = () => {
     setError("");
   } catch (err) {
     console.error("Error downloading submission:", err);
-    setError(err.response?.data?.message || "Failed to download submission");
+    setError(err.message || "Failed to download submission");
+    
     if (err.response?.status === 401 || err.response?.status === 403) {
       navigate("/login");
     }
