@@ -154,12 +154,12 @@ const AssignmentManagement = () => {
   }
 };
   // Download a submission file
+// Updated handleDownload function in AssignmentManagement.js
 const handleDownload = async (submissionId, studentName) => {
   try {
     // First, get the signed URL from your backend
     const response = await api.get(
       `/assignment-submissions/${submissionId}/download`
-      // Note: No responseType: "blob" here since we're getting JSON with signedUrl
     );
 
     console.log("Response from backend:", response.data);
@@ -168,34 +168,69 @@ const handleDownload = async (submissionId, studentName) => {
       throw new Error("No signed URL received from server");
     }
 
-    // Now use the signed URL to download the file
+    // Create a more reliable filename
+    const timestamp = new Date().getTime();
+    const filename = `${studentName.replace(/\s+/g, '_')}_submission_${timestamp}`;
+    
+    // Try to fetch the file and determine its type
     const fileResponse = await fetch(response.data.signedUrl);
     
     if (!fileResponse.ok) {
       throw new Error(`Failed to download file: ${fileResponse.status} ${fileResponse.statusText}`);
     }
 
+    // Get content type to determine extension
+    const contentType = fileResponse.headers.get('content-type');
+    let extension = 'bin'; // default extension
+    
+    // Map common content types to extensions
+    const contentTypeMap = {
+      'application/pdf': 'pdf',
+      'application/msword': 'doc',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+      'application/vnd.ms-excel': 'xls',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+      'application/vnd.ms-powerpoint': 'ppt',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+      'text/plain': 'txt',
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/gif': 'gif',
+      'video/mp4': 'mp4',
+      'audio/mpeg': 'mp3',
+      'audio/wav': 'wav'
+    };
+
+    if (contentType && contentTypeMap[contentType]) {
+      extension = contentTypeMap[contentType];
+    } else {
+      // Fallback: try to extract from URL
+      try {
+        const urlWithoutQuery = response.data.signedUrl.split('?')[0];
+        const pathParts = urlWithoutQuery.split('/');
+        const lastPart = pathParts[pathParts.length - 1];
+        if (lastPart.includes('.')) {
+          const extractedExt = lastPart.split('.').pop();
+          if (extractedExt.length <= 4) { // reasonable extension length
+            extension = extractedExt;
+          }
+        }
+      } catch (e) {
+        console.warn("Could not extract extension from URL");
+      }
+    }
+
     // Get the file as a blob
     const blob = await fileResponse.blob();
 
-    // Extract file extension from the original file URL if possible
-    let fileExtension = 'pdf'; // default
-    try {
-      // Try to extract extension from the Cloudinary URL
-      const urlParts = response.data.signedUrl.split('?')[0]; // Remove query params
-      const pathParts = urlParts.split('.');
-      if (pathParts.length > 1) {
-        fileExtension = pathParts.pop();
-      }
-    } catch (e) {
-      console.warn("Could not extract file extension, using default");
-    }
-
-    // Create download link
+    // Create download link with proper filename
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `${studentName}_submission.${fileExtension}`);
+    link.setAttribute("download", `${filename}.${extension}`);
+    
+    // Make sure the link is not visible
+    link.style.display = 'none';
     
     // Trigger download
     document.body.appendChild(link);
@@ -205,7 +240,7 @@ const handleDownload = async (submissionId, studentName) => {
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
 
-    setSuccessMessage("Submission downloaded successfully!");
+    setSuccessMessage(`${studentName}'s submission downloaded successfully!`);
     setError("");
   } catch (err) {
     console.error("Error downloading submission:", err);
