@@ -55,52 +55,7 @@ const [profileFile, setProfileFile] = useState(null); // for uploading to backen
     (course) => String(course.instructorId) === String(user._id)
   );
 
-  // Sample data for graphs (you can replace this with real data from your backend)
-  const monthlyRevenueData = [
-    { month: 'Jan', revenue: 4000, students: 240 },
-    { month: 'Feb', revenue: 3000, students: 139 },
-    { month: 'Mar', revenue: 2000, students: 980 },
-    { month: 'Apr', revenue: 2780, students: 390 },
-    { month: 'May', revenue: 1890, students: 480 },
-    { month: 'Jun', revenue: 2390, students: 380 },
-    { month: 'Jul', revenue: 3490, students: 430 },
-  ];
-
-  const coursePerformanceData = filteredCourses.length > 0 ? filteredCourses.map((course, index) => ({
-    name: course.title.slice(0, 20) + (course.title.length > 20 ? '...' : ''),
-    students: Math.floor(Math.random() * 100) + 10,
-    rating: parseFloat((Math.random() * 2 + 3).toFixed(1)),
-    revenue: Math.floor(Math.random() * 5000) + 1000,
-  })) : [
-    { name: 'React Fundamentals', students: 45, rating: 4.5, revenue: 2250 },
-    { name: 'Advanced JavaScript', students: 32, rating: 4.2, revenue: 1600 },
-    { name: 'Node.js Masterclass', students: 28, rating: 4.8, revenue: 1400 },
-    { name: 'Web Development', students: 55, rating: 4.1, revenue: 2750 },
-  ];
-
-  const studentEngagementData = [
-    { name: 'Active', value: 65, color: '#10B981' },
-    { name: 'Completed', value: 25, color: '#3B82F6' },
-    { name: 'Dropped', value: 10, color: '#EF4444' },
-  ];
-
-  const weeklyEnrollmentData = [
-    { week: 'Week 1', enrollments: 12 },
-    { week: 'Week 2', enrollments: 19 },
-    { week: 'Week 3', enrollments: 8 },
-    { week: 'Week 4', enrollments: 15 },
-    { week: 'Week 5', enrollments: 22 },
-    { week: 'Week 6', enrollments: 18 },
-    { week: 'Week 7', enrollments: 25 },
-  ];
-
-  const ratingDistributionData = [
-    { rating: '5 Stars', count: 45, color: '#F59E0B' },
-    { rating: '4 Stars', count: 32, color: '#10B981' },
-    { rating: '3 Stars', count: 18, color: '#6366F1' },
-    { rating: '2 Stars', count: 8, color: '#EF4444' },
-    { rating: '1 Star', count: 3, color: '#6B7280' },
-  ];
+  
 
   // Sync editUser with user from context
   useEffect(() => {
@@ -186,11 +141,14 @@ useEffect(() => {
 }, [editUser?.profilePic]);
 
 
+// Fixed handleProfileImageChange function
 const handleProfileImageChange = (e) => {
   const file = e.target.files[0];
   if (file) {
-    setProfilePreview(URL.createObjectURL(file)); // preview
-    setEditUser((prev) => ({ ...prev, profilePic: file })); // backend save ke liye
+    const previewUrl = URL.createObjectURL(file);
+    setProfilePreview(previewUrl); // Set preview for immediate display
+    setProfileFile(file); // Store file for upload
+    setEditUser((prev) => ({ ...prev, profilePic: file })); // Store file in editUser
   }
 };
 
@@ -201,8 +159,9 @@ const saveProfile = async () => {
     formData.append("email", editUser.email);
     formData.append("bio", editUser.bio || "");
 
-    if (editUser.profilePic instanceof File) {
-      formData.append("profilePic", editUser.profilePic);
+    // Use profileFile instead of checking editUser.profilePic instanceof File
+    if (profileFile) {
+      formData.append("profilePic", profileFile);
     }
 
     const token = localStorage.getItem("authToken");
@@ -212,18 +171,21 @@ const saveProfile = async () => {
       body: formData,
       headers: {
         Authorization: `Bearer ${token}`,
-        // ⚠️ Don't add Content-Type here, browser will handle it for FormData
       },
     });
 
     const data = await res.json();
 
-  if (res.ok) {
-  alert("Profile updated successfully");
-  setUser((prev) => ({ ...prev, ...data.user })); // context update
-  setEditProfile(false);
-}
- else {
+    if (res.ok) {
+      alert("Profile updated successfully");
+      setUser(data); // Update user context with response data
+      setEditProfile(false);
+      setProfileFile(null); // Clear the file after successful upload
+      // Clean up the preview URL to prevent memory leaks
+      if (profilePreview && profilePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(profilePreview);
+      }
+    } else {
       alert(data.message || "Error updating profile");
     }
   } catch (err) {
@@ -834,18 +796,20 @@ const saveProfile = async () => {
        {/* Profile Picture */}
 <div className="flex flex-col items-center mb-4">
   <div className="relative">
-{user?.profilePic ? (
-  <img
-    className="h-24 w-24 rounded-full border-4 border-white shadow-lg object-cover"
-    src={user.profilePic}
-    alt="Instructor profile"
-  />
-) : (
-  <div className="h-24 w-24 rounded-full border-4 border-white shadow-lg bg-gray-200 flex items-center justify-center text-gray-500 font-bold">
-    {user?.name ? user.name[0].toUpperCase() : "?"}
-  </div>
-)}
-
+    {/* Use profilePreview if available, otherwise fallback to user.profilePic */}
+    <img
+      className="h-24 w-24 rounded-full border-4 border-white shadow-lg object-cover"
+      src={
+        profilePreview || 
+        user?.profilePic || 
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&size=96&background=6366f1&color=white`
+      }
+      alt="Profile preview"
+      onError={(e) => {
+        e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&size=96&background=6366f1&color=white`;
+      }}
+    />
+    
     <label className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 cursor-pointer">
       <PencilIcon className="h-4 w-4 text-indigo-600" />
       <input
@@ -856,6 +820,7 @@ const saveProfile = async () => {
       />
     </label>
   </div>
+  <p className="text-xs text-gray-500 mt-2">Click the pencil icon to change photo</p>
 </div>
 
 
