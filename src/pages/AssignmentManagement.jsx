@@ -154,22 +154,43 @@ const AssignmentManagement = () => {
   }
 };
   // Download a submission file
- const handleDownload = async (submissionId, studentName) => {
+const handleDownload = async (submissionId, studentName) => {
   try {
-    const response = await api.get(
-      `/assignment-submissions/${submissionId}/download`,
-      {
-        responseType: "blob", // blob download ke liye zaroori
+    // Fetch the signed URL from the backend
+    const response = await api.get(`/assignment-submissions/${submissionId}/download`);
+
+    const { signedUrl } = response.data;
+    if (!signedUrl) {
+      throw new Error("No signed URL provided by the server");
+    }
+
+    // Fetch the file from the signed URL
+    const fileResponse = await fetch(signedUrl, {
+      method: "GET",
+      headers: {
+        Accept: "application/pdf", // Specify expected file type
+      },
+    });
+
+    if (!fileResponse.ok) {
+      throw new Error(`Failed to fetch file: ${fileResponse.statusText}`);
+    }
+
+    // Get the content-disposition header for the filename
+    let fileName = `${studentName}_submission.pdf`;
+    const contentDisposition = fileResponse.headers.get("content-disposition");
+    if (contentDisposition) {
+      const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
+      if (fileNameMatch) {
+        fileName = fileNameMatch[1];
       }
-    );
+    }
 
-    // File ka naam content-disposition header se extract karna
-    const fileName =
-      response.headers["content-disposition"]?.match(/filename="(.+)"/)?.[1] ||
-      `${studentName}_submission.pdf`;
+    // Convert response to Blob
+    const blob = await fileResponse.blob();
 
-    // File download karwana
-    const url = window.URL.createObjectURL(new Blob([response.data]));
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
     link.setAttribute("download", fileName);
@@ -182,10 +203,7 @@ const AssignmentManagement = () => {
     setError("");
   } catch (err) {
     console.error("Error downloading submission:", err);
-    setError(err.response?.data?.message || "Failed to download submission");
-    if (err.response?.status === 401 || err.response?.status === 403) {
-      navigate("/login");
-    }
+    setError(err.message || "Failed to download submission");
   }
 };
 
