@@ -49,7 +49,7 @@ const InstructorDashboard = () => {
   const navigate = useNavigate();
 const [profilePreview, setProfilePreview] = useState(""); // for showing the image in modal
 const [profileFile, setProfileFile] = useState(null); // for uploading to backend
-
+const [originalProfilePic, setOriginalProfilePic] = useState("");
 
   const filteredCourses = courses.filter(
     (course) => String(course.instructorId) === String(user._id)
@@ -134,11 +134,16 @@ const handleDeleteCourse = async (courseId) => {
 // Sync with editUser when it changes
 useEffect(() => {
   if (editUser?.profilePic && typeof editUser.profilePic === "string") {
-    setProfilePreview(editUser.profilePic); // backend URL direct use karo (Cloudinary image hamesha full URL hoti hai)
+    setProfilePreview(editUser.profilePic);
+    setOriginalProfilePic(editUser.profilePic);
+  } else if (user?.profilePic) {
+    setProfilePreview(user.profilePic);
+    setOriginalProfilePic(user.profilePic);
   } else {
-    setProfilePreview(""); // default placeholder
+    setProfilePreview("");
+    setOriginalProfilePic("");
   }
-}, [editUser?.profilePic]);
+}, [editUser?.profilePic, user?.profilePic]);
 
 
 // Fixed handleProfileImageChange function
@@ -146,9 +151,9 @@ const handleProfileImageChange = (e) => {
   const file = e.target.files[0];
   if (file) {
     const previewUrl = URL.createObjectURL(file);
-    setProfilePreview(previewUrl); // Set preview for immediate display
+    setProfilePreview(previewUrl); // This will immediately show in the modal
     setProfileFile(file); // Store file for upload
-    setEditUser((prev) => ({ ...prev, profilePic: file })); // Store file in editUser
+    console.log("New image selected, preview set to:", previewUrl); // Debug log
   }
 };
 
@@ -159,7 +164,7 @@ const saveProfile = async () => {
     formData.append("email", editUser.email);
     formData.append("bio", editUser.bio || "");
 
-    // Use profileFile instead of checking editUser.profilePic instanceof File
+    // Only append profilePic if a new file was selected
     if (profileFile) {
       formData.append("profilePic", profileFile);
     }
@@ -178,13 +183,15 @@ const saveProfile = async () => {
 
     if (res.ok) {
       alert("Profile updated successfully");
-      setUser(data); // Update user context with response data
+      setUser(data); // Update user context
       setEditProfile(false);
-      setProfileFile(null); // Clear the file after successful upload
-      // Clean up the preview URL to prevent memory leaks
+      
+      // Clean up
+      setProfileFile(null);
       if (profilePreview && profilePreview.startsWith('blob:')) {
         URL.revokeObjectURL(profilePreview);
       }
+      setProfilePreview(data.profilePic || "");
     } else {
       alert(data.message || "Error updating profile");
     }
@@ -195,7 +202,27 @@ const saveProfile = async () => {
 };
 
 
+const handleEditProfile = () => {
+  setEditUser(user);
+  setProfilePreview(user?.profilePic || "");
+  setOriginalProfilePic(user?.profilePic || "");
+  setProfileFile(null);
+  setEditProfile(true);
+};
 
+// Modified handleCancelEdit function
+const handleCancelEdit = () => {
+  // Clean up any blob URLs to prevent memory leaks
+  if (profilePreview && profilePreview.startsWith('blob:')) {
+    URL.revokeObjectURL(profilePreview);
+  }
+  
+  // Reset to original values
+  setProfilePreview(originalProfilePic);
+  setProfileFile(null);
+  setEditUser(user);
+  setEditProfile(false);
+};
 
   const renderStars = (rating) => {
     return Array(5)
@@ -303,12 +330,12 @@ const saveProfile = async () => {
 />
 
 
-                  <button
-                    onClick={() => setEditProfile(true)}
-                    className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 transition-colors"
-                  >
-                    <PencilIcon className="h-4 w-4 text-indigo-600" />
-                  </button>
+                 <button
+  onClick={handleEditProfile} // Use this instead of () => setEditProfile(true)
+  className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 transition-colors"
+>
+  <PencilIcon className="h-4 w-4 text-indigo-600" />
+</button>
                 </div>
               </div>
               <div className="text-center md:text-left">
@@ -778,6 +805,7 @@ const saveProfile = async () => {
 
         {/* Edit Profile Modal */}
      {/* Edit Profile Modal */}
+// COMPLETE EDIT PROFILE MODAL JSX
 {editProfile && (
   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
     <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -786,43 +814,43 @@ const saveProfile = async () => {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-800">Edit Profile</h2>
           <button
-            onClick={() => setEditProfile(false)}
+            onClick={handleCancelEdit}
             className="text-gray-400 hover:text-gray-500 rounded-full p-1 hover:bg-gray-100"
           >
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
 
-       {/* Profile Picture */}
-<div className="flex flex-col items-center mb-4">
-  <div className="relative">
-    {/* Use profilePreview if available, otherwise fallback to user.profilePic */}
-    <img
-      className="h-24 w-24 rounded-full border-4 border-white shadow-lg object-cover"
-      src={
-        profilePreview || 
-        user?.profilePic || 
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&size=96&background=6366f1&color=white`
-      }
-      alt="Profile preview"
-      onError={(e) => {
-        e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&size=96&background=6366f1&color=white`;
-      }}
-    />
-    
-    <label className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 cursor-pointer">
-      <PencilIcon className="h-4 w-4 text-indigo-600" />
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleProfileImageChange}
-        className="sr-only"
-      />
-    </label>
-  </div>
-  <p className="text-xs text-gray-500 mt-2">Click the pencil icon to change photo</p>
-</div>
-
+        {/* Profile Picture */}
+        <div className="flex flex-col items-center mb-6">
+          <div className="relative">
+            <img
+              className="h-24 w-24 rounded-full border-4 border-gray-200 shadow-lg object-cover"
+              src={
+                profilePreview || 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(editUser?.name || user?.name || 'User')}&size=96&background=6366f1&color=white`
+              }
+              alt="Profile preview"
+              onError={(e) => {
+                e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(editUser?.name || user?.name || 'User')}&size=96&background=6366f1&color=white`;
+              }}
+            />
+            
+            <label className="absolute bottom-0 right-0 bg-white p-1.5 rounded-full shadow-md hover:bg-gray-100 cursor-pointer border border-gray-300">
+              <PencilIcon className="h-4 w-4 text-indigo-600" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleProfileImageChange}
+                className="sr-only"
+              />
+            </label>
+          </div>
+          <p className="text-xs text-gray-500 mt-2 text-center">Click the pencil icon to change photo</p>
+          {profileFile && (
+            <p className="text-xs text-green-600 mt-1">New image selected!</p>
+          )}
+        </div>
 
         {/* Form Fields */}
         <div className="space-y-4">
@@ -833,9 +861,11 @@ const saveProfile = async () => {
               name="name"
               value={editUser?.name || ""}
               onChange={handleProfileChange}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+              className="w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3"
+              placeholder="Enter your full name"
             />
           </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
@@ -843,9 +873,11 @@ const saveProfile = async () => {
               name="email"
               value={editUser?.email || ""}
               onChange={handleProfileChange}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+              className="w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3"
+              placeholder="Enter your email address"
             />
           </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
             <textarea
@@ -853,17 +885,17 @@ const saveProfile = async () => {
               rows={4}
               value={editUser?.bio || ""}
               onChange={handleProfileChange}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+              className="w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3"
               placeholder="Tell students about your background and expertise..."
             />
           </div>
         </div>
 
         {/* Buttons */}
-        <div className="pt-4 flex justify-end space-x-3">
+        <div className="pt-6 flex justify-end space-x-3">
           <button
             type="button"
-            onClick={() => setEditProfile(false)}
+            onClick={handleCancelEdit}
             className="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
             Cancel
